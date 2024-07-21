@@ -1,0 +1,12 @@
+version: '3.4'
+services:
+  okdong-postgresql:
+    image: postgres:14.10
+    environment:
+      POSTGRES_PASSWORD: ok@dong8
+      POSTGRES_USER: okdonguser
+      POSTGRES_DB: okdong
+      TZ: Asia/Seoul
+    ports:
+      - 5432:5432
+    restart: always
