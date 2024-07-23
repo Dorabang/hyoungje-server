@@ -1,10 +1,6 @@
 import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateUserDto {
-  @IsString(null)
-  @IsOptional()
-  bookmark?: string[] | null;
-
   @IsString()
   @IsNotEmpty()
   userId: string;
@@ -17,7 +13,11 @@ export class CreateUserDto {
   @IsNotEmpty()
   displayName: string;
 
-  @IsString()
+  @IsString(null)
+  @IsOptional()
+  bookmark?: string[] | null;
+
+  @IsString(null)
   @IsOptional()
   profile?: string;
 

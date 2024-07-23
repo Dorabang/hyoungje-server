@@ -1,10 +1,6 @@
 import { IsString, IsOptional } from 'class-validator';
 
 export class UpdateUserDto {
-  @IsString(null)
-  @IsOptional()
-  bookmark?: string[] | null;
-
   @IsString()
   @IsOptional()
   userId?: string;
@@ -16,6 +12,10 @@ export class UpdateUserDto {
   @IsString()
   @IsOptional()
   displayName?: string;
+
+  @IsString(null)
+  @IsOptional()
+  bookmark?: string[] | null;
 
   @IsString()
   @IsOptional()

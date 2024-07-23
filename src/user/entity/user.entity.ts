@@ -7,12 +7,7 @@ export class User extends Model<User> {
     autoIncrement: true,
     primaryKey: true,
   })
-  id: number;
-
-  @Column({
-    type: DataType.STRING,
-  })
-  bookmark: string[];
+  id: string;
 
   @Column({
     type: DataType.STRING,
@@ -35,13 +30,18 @@ export class User extends Model<User> {
 
   @Column({
     type: DataType.STRING,
+  })
+  bookmark: string[];
+
+  @Column({
+    type: DataType.STRING,
     allowNull: true,
   })
   profile: string;
 
   @Column({
     type: DataType.STRING,
-    allowNull: false,
+    allowNull: true,
   })
   phone: string;
 }
