@@ -12,18 +12,18 @@ import { User } from 'src/user/entity/user.entity';
   tableName: 'posts',
 })
 export class Post extends Model<Post> {
+  @Column({
+    type: DataType.STRING,
+    primaryKey: true,
+  })
+  id: string;
+
   @ForeignKey(() => User)
   @Column
   userId: number;
 
   @BelongsTo(() => User)
   user: User;
-
-  @Column({
-    type: DataType.STRING,
-    primaryKey: true,
-  })
-  id: string;
 
   @Column({
     type: DataType.ARRAY(DataType.STRING),
@@ -72,12 +72,6 @@ export class Post extends Model<Post> {
     allowNull: false,
   })
   bookmark: string[];
-
-  @Column({
-    type: DataType.INTEGER,
-    allowNull: false,
-  })
-  num: number;
 
   @Column({
     type: DataType.STRING,
