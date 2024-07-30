@@ -1,6 +1,8 @@
 import {
   Body,
   Controller,
+  HttpException,
+  HttpStatus,
   Post,
   Req,
   Res,
@@ -26,7 +28,7 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production',
       maxAge: 1 * 60 * 60 * 1000, // 1시간
     });
-    res.cookie('access_token', (await token).access_token, {
+    res.cookie('refresh_token', (await token).refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
@@ -37,13 +39,29 @@ export class AuthController {
 
   @Post('refresh')
   async refresh(@Req() req: Request, @Res() res: Response) {
-    const refreshToken = req.headers.authorization.slice(7);
-    const accessToken = this.authService.refresh(refreshToken);
+    const refreshToken = req.cookies?.refresh_token;
 
-    return res.cookie('access_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 1 * 60 * 60 * 1000, // 1시간
-    });
+    if (!refreshToken) {
+      throw new HttpException(
+        'Refresh token not found',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    try {
+      const accessToken = this.authService.refresh(refreshToken);
+
+      res.cookie('access_token', await accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 1 * 60 * 60 * 1000, // 1시간
+      });
+
+      return res
+        .status(200)
+        .json({ message: 'Access Token refreshed successfully.' });
+    } catch (err) {
+      console.log('🚀 ~ AuthController ~ refresh ~ err:', err);
+    }
   }
 }
