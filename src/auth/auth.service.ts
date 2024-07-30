@@ -39,27 +39,18 @@ export class AuthService {
 
   async refresh(refreshToken: string) {
     try {
-      const payload = this.jwtService.verify(refreshToken);
-      console.log('🚀 ~ AuthService ~ refresh ~ payload:', payload);
-
-      const user = await this.userService.getByUserId(payload.sub);
-      if (!user) {
-        throw new UnauthorizedException({
-          error: 'E001',
-          message: 'Invalid refresh token',
-        });
-      }
-
-      return {
-        access_token: this.jwtService.sign(payload, {
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET,
+      });
+      const newAccessToken = this.jwtService.sign(
+        { userId: payload.userId, sub: payload.sub },
+        {
           secret: process.env.JWT_SECRET,
           expiresIn: process.env.JWT_EXPIRATION_TIME,
-        }),
-        refresh_token: this.jwtService.sign(payload, {
-          secret: process.env.JWT_REFRESH_SECRET,
-          expiresIn: process.env.JWT_REFRESH_EXPIRATION_TIME,
-        }),
-      };
+        },
+      );
+
+      return newAccessToken;
     } catch (error) {
       console.log('🚀 ~ AuthService ~ refresh ~ error:', error);
     }
@@ -67,13 +58,14 @@ export class AuthService {
 
   async login(user: any) {
     const payload = { userId: user.userId, sub: user.id };
+
     return {
       access_token: this.jwtService.sign(payload, {
-        secret: process.env.JWT_SECRET,
+        secret: process.env.JWT_SECRET || 'jwt_secret',
         expiresIn: process.env.JWT_EXPIRATION_TIME,
       }),
       refresh_token: this.jwtService.sign(payload, {
-        secret: process.env.JWT_REFRESH_SECRET,
+        secret: process.env.JWT_REFRESH_SECRET || 'jwt_refresh_secret',
         expiresIn: process.env.JWT_REFRESH_EXPIRATION_TIME,
       }),
     };
