@@ -12,6 +12,23 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
+  async validateUserByJwt(accessToken: string) {
+    try {
+      const payload = this.jwtService.verify(accessToken, {
+        secret: process.env.JWT_SECRET,
+      });
+      console.log('🚀 ~ AuthService ~ validateUserByJwt ~ payload:', payload);
+      const user = await this.userService.getByUserId(payload.userId);
+      console.log('🚀 ~ AuthService ~ validateUserByJwt ~ user:', user);
+      // if (!user) {
+      //   throw new UnauthorizedException();
+      // }
+      // return user;
+    } catch (error) {
+      console.log('🚀 ~ AuthService ~ validateUserByJwt ~ error:', error);
+    }
+  }
+
   async validateUser(loginUserDto: LoginUserDto): Promise<any> {
     const user = await this.userService.getByUserId(loginUserDto.userId);
     if (user === null) {

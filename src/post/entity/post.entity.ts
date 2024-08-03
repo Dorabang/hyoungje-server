@@ -3,9 +3,11 @@ import {
   Column,
   DataType,
   ForeignKey,
+  HasMany,
   Model,
   Table,
 } from 'sequelize-typescript';
+import { Comment } from 'src/comments/entity/comments.entity';
 import { User } from 'src/user/entity/user.entity';
 
 @Table({
@@ -13,7 +15,8 @@ import { User } from 'src/user/entity/user.entity';
 })
 export class Post extends Model<Post> {
   @Column({
-    type: DataType.STRING,
+    type: DataType.INTEGER,
+    autoIncrement: true,
     primaryKey: true,
   })
   id: string;
@@ -30,18 +33,6 @@ export class Post extends Model<Post> {
     allowNull: true,
   })
   image: string[];
-
-  @Column({
-    type: DataType.BIGINT,
-    allowNull: false,
-  })
-  createdAt: number;
-
-  @Column({
-    type: DataType.BIGINT,
-    allowNull: false,
-  })
-  updatedAt: number;
 
   @Column({
     type: DataType.STRING,
@@ -69,7 +60,7 @@ export class Post extends Model<Post> {
 
   @Column({
     type: DataType.ARRAY(DataType.STRING),
-    allowNull: false,
+    allowNull: true,
   })
   bookmark: string[];
 
@@ -126,4 +117,7 @@ export class Post extends Model<Post> {
     allowNull: false,
   })
   marketType: string;
+
+  @HasMany(() => Comment)
+  comments: Comment[];
 }

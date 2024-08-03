@@ -13,8 +13,34 @@ export class PostService {
     return this.postModel.create(post);
   }
 
-  async findAll(): Promise<Post[]> {
-    return this.postModel.findAll();
+  async findAll(
+    marketType: string,
+    page: number = 1,
+    size: number = 15,
+    sort: string = 'createdAt',
+    order: 'ASC' | 'DESC' = 'DESC',
+  ): Promise<{ data: Post[]; total: number; isLast: boolean }> {
+    const offset = (page - 1) * size;
+
+    // 총 포스트 개수 가져오기
+    const total = await this.postModel.count({ where: { marketType } });
+
+    // 마지막 페이지 여부
+    const isLast = page * size >= total;
+
+    // 페이지네이션과 정렬을 적용하여 포스트 가져오기
+    const posts = await this.postModel.findAll({
+      where: { marketType },
+      limit: size,
+      offset,
+      order: [[sort, order]],
+    });
+
+    return {
+      data: posts,
+      total,
+      isLast,
+    };
   }
 
   async findByMarketType(marketType: string): Promise<Post[]> {
