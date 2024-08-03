@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  HttpException,
   HttpStatus,
   Post,
   Req,
@@ -42,10 +41,7 @@ export class AuthController {
     const refreshToken = req.cookies?.refresh_token;
 
     if (!refreshToken) {
-      throw new HttpException(
-        'Refresh token not found',
-        HttpStatus.UNAUTHORIZED,
-      );
+      throw new UnauthorizedException('Refresh token not found');
     }
 
     try {
@@ -62,6 +58,10 @@ export class AuthController {
         .json({ message: 'Access Token refreshed successfully.' });
     } catch (err) {
       console.log('🚀 ~ AuthController ~ refresh ~ err:', err);
+
+      return res
+        .status(HttpStatus.UNAUTHORIZED)
+        .json({ message: 'Invalid or expired refresh token' });
     }
   }
 }
