@@ -1,5 +1,3 @@
-// src/posts/dto/update-post.dto.ts
-
 import {
   IsString,
   IsNumber,

@@ -19,14 +19,24 @@ export class PostService {
     size: number = 15,
     sort: string = 'createdAt',
     order: 'ASC' | 'DESC' = 'DESC',
-  ): Promise<{ data: Post[]; total: number; isLast: boolean }> {
+  ): Promise<{
+    result: 'SUCCESS' | 'ERROR';
+    data: Post[];
+    totalResult: number;
+    currentPage: number;
+    totalPages: number;
+    isLast: boolean;
+  }> {
     const offset = (page - 1) * size;
 
     // 총 포스트 개수 가져오기
-    const total = await this.postModel.count({ where: { marketType } });
+    const totalResult = await this.postModel.count({ where: { marketType } });
+
+    // 총 페이지 수
+    const totalPages = Math.ceil(totalResult / size);
 
     // 마지막 페이지 여부
-    const isLast = page * size >= total;
+    const isLast = page * size >= totalResult;
 
     // 페이지네이션과 정렬을 적용하여 포스트 가져오기
     const posts = await this.postModel.findAll({
@@ -37,8 +47,11 @@ export class PostService {
     });
 
     return {
-      data: posts,
-      total,
+      result: 'SUCCESS',
+      data: order === 'DESC' ? posts.sort((a, b) => b[sort] - a[sort]) : posts,
+      totalResult,
+      currentPage: Number(page),
+      totalPages,
       isLast,
     };
   }
@@ -55,7 +68,7 @@ export class PostService {
 
   async update(id: string, post: Partial<Post>): Promise<void> {
     await this.postModel.update(post, {
-      where: { id },
+      where: { postId: id },
     });
   }
 

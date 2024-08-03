@@ -22,6 +22,7 @@ export class AuthController {
     if (!user) {
       throw new UnauthorizedException();
     }
+
     const token = this.authService.login(user);
     res.cookie('access_token', (await token).access_token, {
       httpOnly: true,

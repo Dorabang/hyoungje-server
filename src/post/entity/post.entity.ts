@@ -19,7 +19,7 @@ export class Post extends Model<Post> {
     autoIncrement: true,
     primaryKey: true,
   })
-  id: string;
+  postId: number;
 
   @ForeignKey(() => User)
   @Column
