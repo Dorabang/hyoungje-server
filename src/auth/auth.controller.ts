@@ -7,6 +7,7 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginUserDto } from 'src/user/dto/login-user.dto';
@@ -58,11 +59,13 @@ export class AuthController {
         maxAge: 1 * 60 * 60 * 1000, // 1시간
       });
 
-      return res
-        .status(200)
-        .json({ message: 'Access Token refreshed successfully.' });
+      return res.status(200).json({
+        message: 'Access Token refreshed successfully.',
+        access_token: accessToken,
+      });
     } catch (err) {
       console.log('🚀 ~ AuthController ~ refresh ~ err:', err);
+      throw new InternalServerErrorException();
     }
   }
 }

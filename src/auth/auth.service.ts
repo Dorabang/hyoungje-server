@@ -50,13 +50,10 @@ export class AuthService {
       const payload = this.jwtService.verify(refreshToken, {
         secret: process.env.JWT_REFRESH_SECRET,
       });
-      const newAccessToken = this.jwtService.sign(
-        { userId: payload.userId, sub: payload.sub },
-        {
-          secret: process.env.JWT_SECRET,
-          expiresIn: process.env.JWT_EXPIRATION_TIME,
-        },
-      );
+      const newAccessToken = this.jwtService.sign(payload, {
+        secret: process.env.JWT_SECRET,
+        expiresIn: process.env.JWT_EXPIRATION_TIME,
+      });
 
       return newAccessToken;
     } catch (error) {
@@ -65,7 +62,11 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = { userId: user.dataValues.userId, sub: user.dataValues.id };
+    const payload = {
+      userId: user.dataValues.userId,
+      sub: user.dataValues.id,
+      isAdmin: user.dataValues.isAdmin,
+    };
 
     return {
       access_token: this.jwtService.sign(payload, {
