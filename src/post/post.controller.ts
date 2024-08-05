@@ -11,6 +11,7 @@ import {
   Req,
   UnauthorizedException,
   Res,
+  NotFoundException,
 } from '@nestjs/common';
 import { PostService } from './post.service';
 import { Post as PostEntity } from './entity/post.entity';
@@ -107,8 +108,33 @@ export class PostController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.postService.remove(id);
+  async remove(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const payload: any = req.user;
+    if (!payload) {
+      throw new UnauthorizedException({
+        error: 'E001',
+        message: '접근 권한이 없는 사용자입니다.',
+      });
+    }
+    const user = await this.userService.getByUserId(payload.userId);
+    const post = await this.postService.findOne(id);
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+    if (!user || user.dataValues.id !== post.userId) {
+      throw new UnauthorizedException({
+        error: 'E001',
+        message: '접근 권한이 없는 사용자입니다.',
+      });
+    }
+    this.postService.remove(id);
+
+    return res.status(200).json({ result: 'SUCCESS' });
   }
 }

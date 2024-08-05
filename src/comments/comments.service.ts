@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Comment } from 'src/comments/entity/comments.entity';
 import { Post } from 'src/post/entity/post.entity';
@@ -20,7 +20,7 @@ export class CommentsService {
     // 댓글이 속한 게시물이 존재하는지 확인
     const post = await this.postModel.findByPk(postId);
     if (!post) {
-      throw new Error('Post not found');
+      throw new NotFoundException('Post not found');
     }
 
     // 댓글 생성
@@ -29,6 +29,8 @@ export class CommentsService {
       content,
       postId,
     });
+
+    await post.increment('commentCount');
 
     return comment;
   }
@@ -40,9 +42,25 @@ export class CommentsService {
     });
   }
 
+  async update(id: number, content: Partial<Comment>): Promise<void> {
+    await this.commentModel.update(content, { where: { id } });
+  }
+
   async remove(id: number): Promise<void> {
-    await this.postModel.destroy({
-      where: { id },
-    });
+    const comment = await this.commentModel.findByPk(id);
+
+    if (!comment) {
+      throw new NotFoundException('Comment not found');
+    }
+
+    const post = await this.postModel.findByPk(id);
+
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+
+    await comment.destroy();
+
+    await post.decrement('commentCount');
   }
 }

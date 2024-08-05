@@ -1,12 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Post } from './entity/post.entity';
+import { Comment } from 'src/comments/entity/comments.entity';
 
 @Injectable()
 export class PostService {
   constructor(
     @InjectModel(Post)
     private readonly postModel: typeof Post,
+    @InjectModel(Comment)
+    private readonly commentModel: typeof Comment,
   ) {}
 
   async create(post: Partial<Post>): Promise<Post> {
@@ -73,8 +76,13 @@ export class PostService {
   }
 
   async remove(id: string): Promise<void> {
-    await this.postModel.destroy({
-      where: { id },
-    });
+    const post = await this.postModel.findByPk(id);
+    if (!post) {
+      throw new NotFoundException({ error: 'E001', message: 'Post Not found' });
+    }
+    const comments = await this.commentModel.findAll({ where: { postId: id } });
+
+    await post.destroy();
+    comments.forEach(async (comment) => await comment.destroy());
   }
 }

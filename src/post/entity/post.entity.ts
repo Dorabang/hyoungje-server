@@ -118,6 +118,13 @@ export class Post extends Model<Post> {
   })
   marketType: string;
 
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  })
+  commentCount: number; // 댓글 수 칼럼
+
   @HasMany(() => Comment)
   comments: Comment[];
 }
