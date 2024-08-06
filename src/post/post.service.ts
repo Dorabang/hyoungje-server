@@ -65,20 +65,20 @@ export class PostService {
     });
   }
 
-  async findOne(id: string): Promise<Post> {
+  async findOne(id: number): Promise<Post> {
     return this.postModel.findByPk(id);
   }
 
-  async update(id: string, post: Partial<Post>): Promise<void> {
+  async update(id: number, post: Partial<Post>): Promise<void> {
     await this.postModel.update(post, {
       where: { postId: id },
     });
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: number): Promise<void> {
     const post = await this.postModel.findByPk(id);
     if (!post) {
-      throw new NotFoundException({ error: 'E001', message: 'Post Not found' });
+      throw new NotFoundException({ message: 'Post Not found' });
     }
     const comments = await this.commentModel.findAll({ where: { postId: id } });
 

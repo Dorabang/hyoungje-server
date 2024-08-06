@@ -35,15 +35,62 @@ export class CommentsService {
     return comment;
   }
 
-  async getCommentsByPost(postId: number): Promise<Comment[]> {
+  async getMyComments(userId: number) {
+    return await this.postModel.findAll({ where: { userId } });
+  }
+
+  async getCommentsByPost(
+    postId: number,
+    page: number = 1,
+    size: number = 15,
+    sort: string = 'createdAt',
+    order: 'ASC' | 'DESC' = 'DESC',
+  ): Promise<{
+    result: 'SUCCESS';
+    data: Comment[];
+    totalResult: number;
+    currentPage: number;
+    totalPages: number;
+    isLast: boolean;
+  }> {
+    const offset = (page - 1) * size;
+
+    // 총 댓글 개수 가져오기
+    const totalResult = await this.commentModel.count({ where: { postId } });
+
+    // 총 페이지 수
+    const totalPages = Math.ceil(totalResult / size);
+
+    // 마지막 페이지 여부
+    const isLast = page * size >= totalResult;
+
     // 특정 게시물의 모든 댓글 가져오기
-    return this.commentModel.findAll({
+    const comments = await this.commentModel.findAll({
       where: { postId },
+      limit: size,
+      offset,
+      order: [[sort, order]],
     });
+
+    return {
+      result: 'SUCCESS',
+      data:
+        order === 'DESC'
+          ? comments.sort((a, b) => b[sort] - a[sort])
+          : comments,
+      totalResult,
+      currentPage: Number(page),
+      totalPages,
+      isLast,
+    };
   }
 
   async update(id: number, content: Partial<Comment>): Promise<void> {
     await this.commentModel.update(content, { where: { id } });
+  }
+
+  async findOne(id: number) {
+    return await this.commentModel.findByPk(id);
   }
 
   async remove(id: number): Promise<void> {
@@ -60,7 +107,6 @@ export class CommentsService {
     }
 
     await comment.destroy();
-
     await post.decrement('commentCount');
   }
 }

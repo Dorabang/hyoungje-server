@@ -51,9 +51,9 @@ export class AuthController {
     }
 
     try {
-      const accessToken = this.authService.refresh(refreshToken);
+      const accessToken = await this.authService.refresh(refreshToken);
 
-      res.cookie('access_token', await accessToken, {
+      res.cookie('access_token', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         maxAge: 1 * 60 * 60 * 1000, // 1시간

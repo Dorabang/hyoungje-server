@@ -69,12 +69,12 @@ export class PostController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @Res() res: Response) {
+  async findOne(@Param('id') id: number, @Res() res: Response) {
     const post = await this.postService.findOne(id);
     if (!post) {
       return res
         .status(404)
-        .json({ error: 'E001', message: '해당 게시물을 찾을 수 없습니다.' });
+        .json({ message: '해당 게시물을 찾을 수 없습니다.' });
     }
     return res.status(200).json({ result: 'SUCCESS', data: post });
   }
@@ -82,7 +82,7 @@ export class PostController {
   @UseGuards(AuthGuard)
   @Put(':id')
   async update(
-    @Param('id') id: string,
+    @Param('id') id: number,
     @Body() updatePostDto: Partial<PostEntity>,
     @Req() req: Request,
     @Res() res: Response,
@@ -91,9 +91,8 @@ export class PostController {
     const user = await this.userService.getByUserId(payload.userId);
     const post = await this.postService.findOne(id);
 
-    if (!payload || !user || user.id !== post.userId) {
+    if (!payload.isAdmin && user.id !== post.userId) {
       throw new UnauthorizedException({
-        error: 'E001',
         message: '접근 권한이 없는 사용자입니다.',
       });
     }
@@ -111,25 +110,18 @@ export class PostController {
   @UseGuards(AuthGuard)
   @Delete(':id')
   async remove(
-    @Param('id') id: string,
+    @Param('id') id: number,
     @Req() req: Request,
     @Res() res: Response,
   ) {
     const payload: any = req.user;
-    if (!payload) {
-      throw new UnauthorizedException({
-        error: 'E001',
-        message: '접근 권한이 없는 사용자입니다.',
-      });
-    }
     const user = await this.userService.getByUserId(payload.userId);
     const post = await this.postService.findOne(id);
     if (!post) {
       throw new NotFoundException('Post not found');
     }
-    if (!user || user.dataValues.id !== post.userId) {
+    if (!payload.isAdmin && user.id !== post.userId) {
       throw new UnauthorizedException({
-        error: 'E001',
         message: '접근 권한이 없는 사용자입니다.',
       });
     }

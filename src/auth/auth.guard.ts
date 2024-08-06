@@ -8,15 +8,13 @@ import { AuthGuard as NestAuthGuard } from '@nestjs/passport';
 @Injectable()
 export class AuthGuard extends NestAuthGuard('jwt') {
   canActivate(context: ExecutionContext) {
-    const request = context.switchToHttp().getRequest();
+    const request = this.getRequest(context);
     const accessToken = this.extractAccessToken(request);
-    const user = request.user;
     if (!accessToken) {
       throw new UnauthorizedException('Access token is required.');
     }
 
     try {
-      if (user && user.isAdmin) return true;
       return super.canActivate(context);
     } catch (err) {
       throw new UnauthorizedException('Invalid access token.');

@@ -1,6 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
 
 import { LoginUserDto } from 'src/user/dto/login-user.dto';
 import { UserService } from 'src/user/user.service';
@@ -14,30 +13,22 @@ export class AuthService {
 
   async validateUserByJwt(payload: any) {
     const user = await this.userService.getByUserId(payload.userId);
-    if (!user) {
-      throw new UnauthorizedException();
-    }
+
     return user.dataValues;
   }
 
   async validateUser(loginUserDto: LoginUserDto): Promise<any> {
     const user = await this.userService.getByUserId(loginUserDto.userId);
-    if (user === null) {
-      throw new UnauthorizedException({
-        error: 'E001',
-        message: '사용자를 찾을 수 없습니다.',
-      });
-    }
-    const passwordValid = await bcrypt.compare(
+    const passwordValid = await this.userService.comparePassword(
       loginUserDto.password,
       user.password,
     );
     if (!passwordValid) {
       throw new UnauthorizedException({
-        error: 'E002',
         message: '비밀번호를 잘못 입력하셨습니다.',
       });
     }
+
     if (user && passwordValid) {
       const { password, ...result } = user;
       return result;
@@ -50,22 +41,26 @@ export class AuthService {
       const payload = this.jwtService.verify(refreshToken, {
         secret: process.env.JWT_REFRESH_SECRET,
       });
-      const newAccessToken = this.jwtService.sign(payload, {
-        secret: process.env.JWT_SECRET,
-        expiresIn: process.env.JWT_EXPIRATION_TIME,
-      });
+      const newAccessToken = this.jwtService.sign(
+        { userId: payload.userId, sub: payload.sub, isAdmin: payload.isAdmin },
+        {
+          secret: process.env.JWT_SECRET,
+          expiresIn: process.env.JWT_EXPIRATION_TIME,
+        },
+      );
 
       return newAccessToken;
     } catch (error) {
+      console.log('🚀 ~ AuthService ~ refresh ~ error:', error);
       throw new UnauthorizedException();
     }
   }
 
   async login(user: any) {
     const payload = {
-      userId: user.dataValues.userId,
-      sub: user.dataValues.id,
-      isAdmin: user.dataValues.isAdmin,
+      userId: user.userId,
+      sub: user.id,
+      isAdmin: user.isAdmin,
     };
 
     return {

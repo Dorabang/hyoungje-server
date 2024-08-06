@@ -7,8 +7,8 @@ import { Post } from 'src/post/entity/post.entity';
 
 @Module({
   imports: [SequelizeModule.forFeature([Comment, Post])],
-  providers: [CommentsService],
   controllers: [CommentsController],
+  providers: [CommentsService],
   exports: [CommentsService],
 })
 export class CommentsModule {}

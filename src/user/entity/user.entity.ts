@@ -10,6 +10,12 @@ export class User extends Model<User> {
   id: number;
 
   @Column({
+    type: DataType.BOOLEAN,
+    allowNull: true,
+  })
+  isAdmin: boolean;
+
+  @Column({
     type: DataType.STRING,
     allowNull: false,
     unique: true,
