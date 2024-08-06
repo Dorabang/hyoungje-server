@@ -6,6 +6,7 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginUserDto } from 'src/user/dto/login-user.dto';
@@ -21,6 +22,7 @@ export class AuthController {
     if (!user) {
       throw new UnauthorizedException();
     }
+
     const token = this.authService.login(user);
     res.cookie('access_token', (await token).access_token, {
       httpOnly: true,
@@ -45,23 +47,21 @@ export class AuthController {
     }
 
     try {
-      const accessToken = this.authService.refresh(refreshToken);
+      const accessToken = await this.authService.refresh(refreshToken);
 
-      res.cookie('access_token', await accessToken, {
+      res.cookie('access_token', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         maxAge: 1 * 60 * 60 * 1000, // 1시간
       });
 
-      return res
-        .status(200)
-        .json({ message: 'Access Token refreshed successfully.' });
+      return res.status(200).json({
+        message: 'Access Token refreshed successfully.',
+        access_token: accessToken,
+      });
     } catch (err) {
       console.log('🚀 ~ AuthController ~ refresh ~ err:', err);
-
-      return res
-        .status(HttpStatus.UNAUTHORIZED)
-        .json({ message: 'Invalid or expired refresh token' });
+      throw new InternalServerErrorException();
     }
   }
 }

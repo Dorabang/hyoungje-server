@@ -1,6 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
 
 import { LoginUserDto } from 'src/user/dto/login-user.dto';
 import { UserService } from 'src/user/user.service';
@@ -12,24 +11,24 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
+  async validateUserByJwt(payload: any) {
+    const user = await this.userService.getByUserId(payload.userId);
+
+    return user.dataValues;
+  }
+
   async validateUser(loginUserDto: LoginUserDto): Promise<any> {
     const user = await this.userService.getByUserId(loginUserDto.userId);
-    if (user === null) {
-      throw new UnauthorizedException({
-        error: 'E001',
-        message: '사용자를 찾을 수 없습니다.',
-      });
-    }
-    const passwordValid = await bcrypt.compare(
+    const passwordValid = await this.userService.comparePassword(
       loginUserDto.password,
       user.password,
     );
     if (!passwordValid) {
       throw new UnauthorizedException({
-        error: 'E002',
         message: '비밀번호를 잘못 입력하셨습니다.',
       });
     }
+
     if (user && passwordValid) {
       const { password, ...result } = user;
       return result;
@@ -45,7 +44,7 @@ export class AuthService {
       console.log('🚀 ~ AuthService ~ refresh ~ payload:', payload);
 
       const newAccessToken = this.jwtService.sign(
-        { userId: payload.userId, sub: payload.sub },
+        { userId: payload.userId, sub: payload.sub, isAdmin: payload.isAdmin },
         {
           secret: process.env.JWT_SECRET,
           expiresIn: process.env.JWT_EXPIRATION_TIME,
@@ -54,12 +53,17 @@ export class AuthService {
 
       return newAccessToken;
     } catch (error) {
+      console.log('🚀 ~ AuthService ~ refresh ~ error:', error);
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
 
   async login(user: any) {
-    const payload = { userId: user.userId, sub: user.id };
+    const payload = {
+      userId: user.userId,
+      sub: user.id,
+      isAdmin: user.isAdmin,
+    };
 
     return {
       access_token: this.jwtService.sign(payload, {

@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import * as bcrypt from 'bcrypt';
 
@@ -14,17 +18,20 @@ export class UserService {
 
   async createUser(userDto: CreateUserDto) {
     userDto.password = await this.hashPassword(userDto.password);
-    const duplicatedUser = await this.getByUserId(userDto.userId);
-    const nicknameValid = await this.getByUserNickname(userDto);
-    if (duplicatedUser) {
+    const duplicatedUser = User.findOne({
+      where: {
+        userId: userDto.userId,
+      },
+    });
+    if (duplicatedUser === null) {
       throw new ConflictException({
-        error: 'E001',
         message: '이미 등록되어 있는 사용자입니다.',
       });
     }
+
+    const nicknameValid = await this.getByUserNickname(userDto);
     if (nicknameValid) {
       throw new ConflictException({
-        error: 'E002',
         message: '이미 등록되어 있는 닉네임입니다.',
       });
     }
@@ -32,11 +39,19 @@ export class UserService {
   }
 
   async getByUserId(userId: string) {
-    return User.findOne({
+    const user = User.findOne({
       where: {
         userId: userId,
       },
     });
+
+    if (!user) {
+      throw new UnauthorizedException({
+        message: '접근 권한이 없는 사용자입니다.1',
+      });
+    }
+
+    return (await user).dataValues;
   }
 
   async getByUserNickname(userDto: CreateUserDto) {
@@ -68,7 +83,27 @@ export class UserService {
     await this.userModel.destroy({ where: { id } });
   }
 
+  /**
+   * 해시 비밀번호 검증 함수
+   *
+   * @param {string} existingPassword 검증이 필요한 비밀번호
+   * @param {string} password 기존 유저의 비밀번호
+   * @return {Promise<boolean>} 검증 후 true, false 리턴
+   */
+  async comparePassword(
+    existingPassword: string,
+    password: string,
+  ): Promise<boolean> {
+    return await bcrypt.compare(existingPassword, password);
+  }
+
   async hashPassword(password: string) {
+    const minLength = 6;
+    if (password.length < minLength) {
+      throw new UnauthorizedException({
+        message: '비밀번호는 6자 이상이어야 합니다.',
+      });
+    }
     return bcrypt.hash(password, 10);
   }
 }

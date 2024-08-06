@@ -7,7 +7,13 @@ export class User extends Model<User> {
     autoIncrement: true,
     primaryKey: true,
   })
-  id: string;
+  id: number;
+
+  @Column({
+    type: DataType.BOOLEAN,
+    allowNull: true,
+  })
+  isAdmin: boolean;
 
   @Column({
     type: DataType.STRING,

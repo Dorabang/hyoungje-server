@@ -8,7 +8,27 @@ import { AuthGuard as NestAuthGuard } from '@nestjs/passport';
 @Injectable()
 export class AuthGuard extends NestAuthGuard('jwt') {
   canActivate(context: ExecutionContext) {
-    return super.canActivate(context);
+    const request = this.getRequest(context);
+    const accessToken = this.extractAccessToken(request);
+    if (!accessToken) {
+      throw new UnauthorizedException('Access token is required.');
+    }
+
+    try {
+      return super.canActivate(context);
+    } catch (err) {
+      throw new UnauthorizedException('Invalid access token.');
+    }
+  }
+
+  private extractAccessToken(request: Request): string | null {
+    const authHeader = request.headers['authorization'];
+    if (!authHeader) {
+      return null;
+    }
+
+    const [type, token] = authHeader.split(' ');
+    return type === 'Bearer' ? token : null;
   }
 
   getRequest(context: ExecutionContext) {

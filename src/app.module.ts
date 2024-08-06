@@ -9,6 +9,8 @@ import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
 import { Post } from './post/entity/post.entity';
 import { AuthModule } from './auth/auth.module';
+import { CommentsModule } from './comments/comments.module';
+import { Comment } from './comments/entity/comments.entity';
 
 @Module({
   imports: [
@@ -20,7 +22,7 @@ import { AuthModule } from './auth/auth.module';
       username: process.env.POSTGRES_USER,
       password: process.env.POSTGRES_PASSWORD,
       database: process.env.POSTGRES_DB,
-      models: [User, Post],
+      models: [User, Post, Comment],
       autoLoadModels: true,
       synchronize: true,
       logging: true,
@@ -28,6 +30,7 @@ import { AuthModule } from './auth/auth.module';
     UserModule,
     PostModule,
     AuthModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
