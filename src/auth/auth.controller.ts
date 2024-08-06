@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  HttpException,
   HttpStatus,
   Post,
   Req,
@@ -44,10 +43,7 @@ export class AuthController {
     const refreshToken = req.cookies?.refresh_token;
 
     if (!refreshToken) {
-      throw new HttpException(
-        'Refresh token not found',
-        HttpStatus.UNAUTHORIZED,
-      );
+      throw new UnauthorizedException('Refresh token not found');
     }
 
     try {

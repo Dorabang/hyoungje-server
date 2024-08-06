@@ -41,6 +41,8 @@ export class AuthService {
       const payload = this.jwtService.verify(refreshToken, {
         secret: process.env.JWT_REFRESH_SECRET,
       });
+      console.log('🚀 ~ AuthService ~ refresh ~ payload:', payload);
+
       const newAccessToken = this.jwtService.sign(
         { userId: payload.userId, sub: payload.sub, isAdmin: payload.isAdmin },
         {
@@ -52,7 +54,7 @@ export class AuthService {
       return newAccessToken;
     } catch (error) {
       console.log('🚀 ~ AuthService ~ refresh ~ error:', error);
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
 
