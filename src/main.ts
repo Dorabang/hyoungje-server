@@ -1,12 +1,18 @@
 import { NestFactory } from '@nestjs/core';
 import * as cookieParser from 'cookie-parser';
+import * as bodyParser from 'body-parser';
 
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  const originUrl = [process.env.PRODUCT_FRONT_URL, process.env.DEV_FRONT_URL];
   const app = await NestFactory.create(AppModule);
   app.use(cookieParser());
-  app.enableCors({ origin: 'http://localhost:3000', credentials: true });
+  app.use(bodyParser.json({ limit: '10mb' }));
+  app.enableCors({
+    origin: originUrl,
+    credentials: true,
+  });
   app.setGlobalPrefix('api');
 
   await app.listen(5000);
