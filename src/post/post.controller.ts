@@ -36,7 +36,7 @@ export class PostController {
     @Res() res: Response,
   ) {
     const user: any = req.user;
-    const validateUser = this.authService.validateUserByJwt(user);
+    const validateUser = this.userService.getByUserId(user.userId);
 
     if (validateUser) {
       const data = await this.postService.create({
@@ -47,7 +47,7 @@ export class PostController {
 
       return res.status(201).json({ result: 'SUCCESS', data });
     }
-    throw new UnauthorizedException();
+    throw new UnauthorizedException({ result: 'ERROR' });
   }
 
   @Get()
@@ -93,6 +93,7 @@ export class PostController {
 
     if (!payload.isAdmin && user.id !== post.userId) {
       throw new UnauthorizedException({
+        result: 'ERROR',
         message: '접근 권한이 없는 사용자입니다.',
       });
     }
@@ -101,6 +102,7 @@ export class PostController {
       this.postService.update(id, updatePostDto);
       return res.status(200).json({ result: 'SUCCESS' });
     } catch (error) {
+      console.log('🚀 ~ PostController ~ error:', error);
       return res
         .status(404)
         .json({ result: 'ERROR', message: '해당 게시물을 찾을 수 없습니다.' });
@@ -118,10 +120,14 @@ export class PostController {
     const user = await this.userService.getByUserId(payload.userId);
     const post = await this.postService.findOne(id);
     if (!post) {
-      throw new NotFoundException('Post not found');
+      throw new NotFoundException({
+        result: 'ERROR',
+        message: 'Post not found',
+      });
     }
     if (!payload.isAdmin && user.id !== post.userId) {
       throw new UnauthorizedException({
+        result: 'ERROR',
         message: '접근 권한이 없는 사용자입니다.',
       });
     }

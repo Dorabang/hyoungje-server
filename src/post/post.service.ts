@@ -78,7 +78,10 @@ export class PostService {
   async remove(id: number): Promise<void> {
     const post = await this.postModel.findByPk(id);
     if (!post) {
-      throw new NotFoundException({ message: 'Post Not found' });
+      throw new NotFoundException({
+        result: 'ERROR',
+        message: 'Post Not found',
+      });
     }
     const comments = await this.commentModel.findAll({ where: { postId: id } });
 

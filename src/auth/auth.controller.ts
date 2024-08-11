@@ -1,16 +1,17 @@
 import {
   Body,
   Controller,
-  HttpStatus,
   Post,
   Req,
   Res,
   UnauthorizedException,
   InternalServerErrorException,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginUserDto } from 'src/user/dto/login-user.dto';
 import { Request, Response } from 'express';
+import { AuthGuard } from './auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -20,7 +21,10 @@ export class AuthController {
   async login(@Body() loginUserDto: LoginUserDto, @Res() res: Response) {
     const user = await this.authService.validateUser(loginUserDto);
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException({
+        result: 'ERROR',
+        message: '사용자를 찾을 수 없습니다.',
+      });
     }
 
     const token = this.authService.login(user);
@@ -38,12 +42,24 @@ export class AuthController {
     return res.status(200).json({ message: 'login successful' });
   }
 
+  @UseGuards(AuthGuard)
+  @Post('logout')
+  async logout(@Res() res: Response) {
+    res.clearCookie('access_token');
+    res.clearCookie('refresh_token');
+
+    return res.status(200).json({ result: 'SUCCESS' });
+  }
+
   @Post('refresh')
   async refresh(@Req() req: Request, @Res() res: Response) {
     const refreshToken = req.cookies?.refresh_token;
 
     if (!refreshToken) {
-      throw new UnauthorizedException('Refresh token not found');
+      throw new UnauthorizedException({
+        result: 'ERROR',
+        message: 'Refresh token not found',
+      });
     }
 
     try {
@@ -61,7 +77,7 @@ export class AuthController {
       });
     } catch (err) {
       console.log('🚀 ~ AuthController ~ refresh ~ err:', err);
-      throw new InternalServerErrorException();
+      throw new InternalServerErrorException({ result: 'ERROR' });
     }
   }
 }

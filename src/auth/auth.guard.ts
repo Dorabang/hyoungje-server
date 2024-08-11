@@ -11,13 +11,20 @@ export class AuthGuard extends NestAuthGuard('jwt') {
     const request = this.getRequest(context);
     const accessToken = this.extractAccessToken(request);
     if (!accessToken) {
-      throw new UnauthorizedException('Access token is required.');
+      throw new UnauthorizedException({
+        result: 'ERROR',
+        message: 'Access token is required.',
+      });
     }
 
     try {
       return super.canActivate(context);
-    } catch (err) {
-      throw new UnauthorizedException('Invalid access token.');
+    } catch (error) {
+      console.log('🚀 ~ AuthGuard ~ canActivate ~ _error:', error);
+      throw new UnauthorizedException({
+        result: 'ERROR',
+        message: 'Invalid access token.',
+      });
     }
   }
 
@@ -43,7 +50,12 @@ export class AuthGuard extends NestAuthGuard('jwt') {
 
   handleRequest(err, user) {
     if (err || !user) {
-      throw err || new UnauthorizedException();
+      throw (
+        err ||
+        new UnauthorizedException({
+          result: 'ERROR',
+        })
+      );
     }
     return user;
   }

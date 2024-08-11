@@ -25,6 +25,7 @@ export class UserService {
     });
     if (duplicatedUser === null) {
       throw new ConflictException({
+        result: 'ERROR',
         message: '이미 등록되어 있는 사용자입니다.',
       });
     }
@@ -32,6 +33,7 @@ export class UserService {
     const nicknameValid = await this.getByUserNickname(userDto);
     if (nicknameValid) {
       throw new ConflictException({
+        result: 'ERROR',
         message: '이미 등록되어 있는 닉네임입니다.',
       });
     }
@@ -47,7 +49,8 @@ export class UserService {
 
     if (!user) {
       throw new UnauthorizedException({
-        message: '접근 권한이 없는 사용자입니다.1',
+        result: 'ERROR',
+        message: '접근 권한이 없는 사용자입니다.',
       });
     }
 
@@ -101,6 +104,7 @@ export class UserService {
     const minLength = 6;
     if (password.length < minLength) {
       throw new UnauthorizedException({
+        result: 'ERROR',
         message: '비밀번호는 6자 이상이어야 합니다.',
       });
     }
