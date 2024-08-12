@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as AWS from 'aws-sdk';
+import * as sharp from 'sharp';
 
 @Injectable()
 export class UploadService {
@@ -17,12 +18,19 @@ export class UploadService {
   }
 
   async uploadImage(file: any): Promise<string> {
-    const key = `images/${Date.now()}${file.originalname}`;
+    const optimizedBuffer = await sharp(file.buffer)
+      .resize({ width: 800 })
+      .jpeg({ quality: 90 })
+      .toBuffer();
+
+    const [fileName, ..._rest] = file.originalname.split('.');
+
+    const key = `images/${Date.now()}${fileName}.jpg`;
     const params: AWS.S3.PutObjectRequest = {
       Bucket: process.env.AWS_BUCKET_NAME,
       ACL: 'private',
       Key: key,
-      Body: file.buffer,
+      Body: optimizedBuffer,
     };
 
     return new Promise((resolve, reject) => {
