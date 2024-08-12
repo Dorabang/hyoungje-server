@@ -11,6 +11,7 @@ import { Post } from './post/entity/post.entity';
 import { AuthModule } from './auth/auth.module';
 import { CommentsModule } from './comments/comments.module';
 import { Comment } from './comments/entity/comments.entity';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { Comment } from './comments/entity/comments.entity';
     PostModule,
     AuthModule,
     CommentsModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

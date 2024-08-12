@@ -1,5 +1,6 @@
 import {
   Controller,
+  InternalServerErrorException,
   Post,
   UploadedFile,
   UploadedFiles,
@@ -15,26 +16,35 @@ export class UploadController {
   @Post('images')
   @UseInterceptors(FilesInterceptor('files', 10))
   async uploadImages(@UploadedFiles() files) {
-    const imageURL: string[] = [];
-    await Promise.all(
-      files.map(async (file: any) => {
-        const key = await this.uploadService.uploadImage(file);
-        imageURL.push(process.env.AWS_BUCKET_ADDRESS + key);
-      }),
-    );
+    try {
+      const imageUrl: string[] = [];
+      await Promise.all(
+        files.map(async (file: any) => {
+          const key = await this.uploadService.uploadImage(file);
+          imageUrl.push(process.env.AWS_BUCKET_ADDRESS + key);
+        }),
+      );
 
-    return { message: 'successfully uploaded', data: imageURL };
+      return { result: 'SUCCESS', data: imageUrl };
+    } catch (error) {
+      console.log('🚀 ~ UploadController ~ uploadImages ~ error:', error);
+      throw new InternalServerErrorException({ result: 'ERROR' });
+    }
   }
 
   @Post('image')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(@UploadedFile() file) {
-    const key = await this.uploadService.uploadImage(file);
-    const imageUrl = process.env.AWS_BUCKET_ADDRESS + key;
-
-    return {
-      message: `이미지 등록 성공`,
-      data: imageUrl,
-    };
+    try {
+      const key = await this.uploadService.uploadImage(file);
+      const imageUrl = process.env.AWS_BUCKET_ADDRESS + key;
+      return {
+        result: 'SUCCESS',
+        data: imageUrl,
+      };
+    } catch (error) {
+      console.log('🚀 ~ UploadController ~ uploadFile ~ error:', error);
+      throw new InternalServerErrorException({ result: 'ERROR' });
+    }
   }
 }

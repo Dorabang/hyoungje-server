@@ -3,11 +3,15 @@ import {
   Controller,
   Delete,
   Get,
+  InternalServerErrorException,
   Post,
   Put,
   Req,
   Res,
+  UnauthorizedException,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './entity/user.entity';
@@ -15,28 +19,54 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { Request, Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { UploadService } from 'src/upload/upload.service';
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly uploadService: UploadService,
+  ) {}
 
   @Post()
-  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
-    const createUser = { isAdmin: false, ...createUserDto };
-    return this.userService.createUser(createUser);
+  @UseInterceptors(FileInterceptor('profile'))
+  async create(
+    @Body() createUserDto: CreateUserDto,
+    @UploadedFile() file: File,
+  ): Promise<{ result: 'SUCCESS' | 'ERROR' }> {
+    const createUser = { ...createUserDto };
+    if (file) {
+      const key = await this.uploadService.uploadImage(file);
+      const imageUrl = process.env.AWS_BUCKET_ADDRESS + key;
+      createUser['profile'] = imageUrl;
+    }
+    createUser['isAdmin'] = false;
+    try {
+      this.userService.createUser(createUser);
+      return { result: 'SUCCESS' };
+    } catch (error) {
+      console.log('🚀 ~ UserController ~ error:', error);
+      throw new InternalServerErrorException({ result: 'ERROR' });
+    }
   }
 
-  @Get()
+  @Get('all')
   async findAll(): Promise<User[]> {
     return this.userService.findAll();
   }
 
-  @Get()
-  async findOne(@Req() req: Request): Promise<User> {
+  @UseGuards(AuthGuard)
+  @Get('info')
+  async findOne(@Req() req: Request): Promise<Partial<User>> {
     const payload: any = req.user;
     const user = await this.userService.getByUserId(payload.userId);
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    const { password, isAdmin, ...userInfo } = user;
 
-    return this.userService.findOne(user.id);
+    return userInfo;
   }
 
   @UseGuards(AuthGuard)
