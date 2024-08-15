@@ -12,37 +12,56 @@ import {
   UnauthorizedException,
   Res,
   NotFoundException,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
+import { Request, Response } from 'express';
+
 import { PostService } from './post.service';
 import { Post as PostEntity } from './entity/post.entity';
 import { AuthGuard } from 'src/auth/auth.guard';
-import { Request, Response } from 'express';
-import { AuthService } from 'src/auth/auth.service';
 import { UserService } from 'src/user/user.service';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { UploadService } from 'src/upload/upload.service';
 
 @Controller('posts')
 export class PostController {
   constructor(
     private readonly postService: PostService,
-    private readonly authService: AuthService,
     private readonly userService: UserService,
+    private readonly uploadService: UploadService,
   ) {}
 
   @UseGuards(AuthGuard)
   @Post()
+  @UseInterceptors(FilesInterceptor('image', 8))
   async create(
     @Body() createPostDto: Partial<PostEntity>,
+    @UploadedFiles() file: File[],
     @Req() req: Request,
     @Res() res: Response,
   ) {
     const user: any = req.user;
     const validateUser = this.userService.getByUserId(user.userId);
+    const createPost = { ...createPostDto };
+
+    if (file) {
+      const imageUrl: string[] = [];
+      await Promise.all(
+        file.map(async (file) => {
+          const key = await this.uploadService.uploadImage(file);
+          imageUrl.push(process.env.AWS_BUCKET_ADDRESS + key);
+        }),
+      );
+
+      createPost['image'] = imageUrl;
+    }
 
     if (validateUser) {
       const data = await this.postService.create({
         views: 0,
         userId: user.sub,
-        ...createPostDto,
+        ...createPost,
       });
 
       return res.status(201).json({ result: 'SUCCESS', data });
@@ -81,9 +100,11 @@ export class PostController {
 
   @UseGuards(AuthGuard)
   @Put(':id')
+  @UseInterceptors(FilesInterceptor('updateImage', 8))
   async update(
     @Param('id') id: number,
     @Body() updatePostDto: Partial<PostEntity>,
+    @UploadedFiles() file: File[],
     @Req() req: Request,
     @Res() res: Response,
   ) {
@@ -99,7 +120,21 @@ export class PostController {
     }
 
     try {
-      this.postService.update(id, updatePostDto);
+      const updatePost = { ...updatePostDto };
+
+      if (file) {
+        const imageUrl: string[] = [];
+        await Promise.all(
+          file.map(async (file) => {
+            const key = await this.uploadService.uploadImage(file);
+            imageUrl.push(process.env.AWS_BUCKET_ADDRESS + key);
+          }),
+        );
+
+        updatePost['image'] = [...updatePostDto.image, ...imageUrl];
+      }
+
+      this.postService.update(id, updatePost);
       return res.status(200).json({ result: 'SUCCESS' });
     } catch (error) {
       console.log('🚀 ~ PostController ~ error:', error);

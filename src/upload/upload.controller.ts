@@ -14,7 +14,7 @@ export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
   @Post('images')
-  @UseInterceptors(FilesInterceptor('files', 10))
+  @UseInterceptors(FilesInterceptor('files', 8))
   async uploadImages(@UploadedFiles() files) {
     try {
       const imageUrl: string[] = [];
