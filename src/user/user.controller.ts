@@ -144,9 +144,14 @@ export class UserController {
   async remove(@Req() req: Request, @Res() res: Response) {
     const payload: any = req.user;
     const user = await this.userService.getByUserId(payload.userId);
-
-    this.userService.remove(user.id);
-    console.log('사용자 삭제');
-    return res.status(200).json({ result: 'SUCCESS' });
+    try {
+      this.userService.remove(user.id);
+      res.clearCookie('access_token');
+      res.clearCookie('refresh_token');
+      return res.status(200).json({ result: 'SUCCESS' });
+    } catch (error) {
+      console.log('🚀 ~ UserController ~ remove ~ error:', error);
+      throw new InternalServerErrorException({ result: 'ERROR' });
+    }
   }
 }
