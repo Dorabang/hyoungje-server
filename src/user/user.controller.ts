@@ -58,21 +58,42 @@ export class UserController {
 
   @UseGuards(AuthGuard)
   @Get('info')
-  async findOne(@Req() req: Request): Promise<Partial<User>> {
+  async findOne(@Req() req: Request, @Res() res: Response) {
     const payload: any = req.user;
     const user = await this.userService.getByUserId(payload.userId);
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException({ result: 'ERROR' });
     }
-    const { password, isAdmin, ...userInfo } = user;
+    const { password, isAdmin, bookmark, ...userInfo } = user;
 
-    return userInfo;
+    return res.status(200).json({ result: 'SUCCESS', data: userInfo });
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('password')
+  async checkPasswordValidation(
+    @Body() unverifiedPassword,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const payload: any = req.user;
+    const user = await this.userService.getByUserId(payload.userId);
+    try {
+      const result = await this.userService.comparePassword(
+        user.password,
+        unverifiedPassword.password,
+      );
+      return res.status(200).json({ result: 'SUCCESS', data: result });
+    } catch (error) {
+      console.log('🚀 ~ UserController ~ error:', error);
+      throw new InternalServerErrorException({ result: 'ERROR' });
+    }
   }
 
   @UseGuards(AuthGuard)
   @Put('password')
   async updatePassword(
-    @Body() updatePassword: { password: string },
+    @Body() updatePassword,
     @Req() req: Request,
     @Res() res: Response,
   ) {
@@ -81,22 +102,41 @@ export class UserController {
     const newPassword = await this.userService.hashPassword(
       updatePassword.password,
     );
-
-    this.userService.update(user.id, { password: newPassword });
-    return res.status(200).json({ result: 'SUCCESS' });
+    try {
+      this.userService.update(user.id, { password: newPassword });
+      res.clearCookie('access_token');
+      res.clearCookie('refresh_token');
+      return res.status(200).json({ result: 'SUCCESS' });
+    } catch (error) {
+      console.log('🚀 ~ UserController ~ error:', error);
+      throw new InternalServerErrorException({ result: 'ERROR' });
+    }
   }
 
+  @UseGuards(AuthGuard)
   @Put()
+  @UseInterceptors(FileInterceptor('profile'))
   async update(
     @Body() updateUserDto: UpdateUserDto,
+    @UploadedFile() file: File,
     @Req() req: Request,
     @Res() res: Response,
   ) {
+    const updateUser = { ...updateUserDto };
+    if (file) {
+      const key = await this.uploadService.uploadImage(file);
+      const imageUrl = process.env.AWS_BUCKET_ADDRESS + key;
+      updateUser['profile'] = imageUrl;
+    }
     const payload: any = req.user;
     const user = await this.userService.getByUserId(payload.userId);
-
-    this.userService.update(user.id, updateUserDto);
-    return res.status(200).json({ result: 'SUCCESS' });
+    try {
+      await this.userService.update(user.id, updateUser);
+      return res.status(200).json({ result: 'SUCCESS' });
+    } catch (error) {
+      console.log('🚀 ~ UserController ~ error:', error);
+      return res.status(500).json({ result: 'ERROR' });
+    }
   }
 
   @UseGuards(AuthGuard)
