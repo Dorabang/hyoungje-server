@@ -89,15 +89,15 @@ export class UserService {
   /**
    * 해시 비밀번호 검증 함수
    *
-   * @param {string} existingPassword 검증이 필요한 비밀번호
-   * @param {string} password 기존 유저의 비밀번호
+   * @param {string} existingPassword 기존 유저의 비밀번호
+   * @param {string} password 검증이 필요한 비밀번호
    * @return {Promise<boolean>} 검증 후 true, false 리턴
    */
   async comparePassword(
     existingPassword: string,
     password: string,
   ): Promise<boolean> {
-    return await bcrypt.compare(existingPassword, password);
+    return await bcrypt.compare(password, existingPassword);
   }
 
   async hashPassword(password: string) {

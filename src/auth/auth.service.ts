@@ -14,8 +14,8 @@ export class AuthService {
   async validateUser(loginUserDto: LoginUserDto): Promise<any> {
     const user = await this.userService.getByUserId(loginUserDto.userId);
     const passwordValid = await this.userService.comparePassword(
-      loginUserDto.password,
       user.password,
+      loginUserDto.password,
     );
     if (!passwordValid) {
       throw new UnauthorizedException({
@@ -25,7 +25,7 @@ export class AuthService {
     }
 
     if (user && passwordValid) {
-      const { password, ...result } = user;
+      const { password, isAdmin, bookmark, ...result } = user;
       return result;
     }
     return null;
