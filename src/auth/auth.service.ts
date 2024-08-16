@@ -11,26 +11,21 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async validateUserByJwt(payload: any) {
-    const user = await this.userService.getByUserId(payload.userId);
-
-    return user.dataValues;
-  }
-
   async validateUser(loginUserDto: LoginUserDto): Promise<any> {
     const user = await this.userService.getByUserId(loginUserDto.userId);
     const passwordValid = await this.userService.comparePassword(
-      loginUserDto.password,
       user.password,
+      loginUserDto.password,
     );
     if (!passwordValid) {
       throw new UnauthorizedException({
-        message: '비밀번호를 잘못 입력하셨습니다.',
+        result: 'ERROR',
+        message: '아이디 혹은 비밀번호를 잘못 입력하셨습니다.',
       });
     }
 
     if (user && passwordValid) {
-      const { password, ...result } = user;
+      const { password, isAdmin, bookmark, ...result } = user;
       return result;
     }
     return null;
@@ -41,7 +36,6 @@ export class AuthService {
       const payload = this.jwtService.verify(refreshToken, {
         secret: process.env.JWT_REFRESH_SECRET,
       });
-      console.log('🚀 ~ AuthService ~ refresh ~ payload:', payload);
 
       const newAccessToken = this.jwtService.sign(
         { userId: payload.userId, sub: payload.sub, isAdmin: payload.isAdmin },
@@ -54,7 +48,10 @@ export class AuthService {
       return newAccessToken;
     } catch (error) {
       console.log('🚀 ~ AuthService ~ refresh ~ error:', error);
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      throw new UnauthorizedException({
+        result: 'ERROR',
+        message: 'Invalid or expired refresh token',
+      });
     }
   }
 

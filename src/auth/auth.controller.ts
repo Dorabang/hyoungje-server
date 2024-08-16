@@ -1,16 +1,16 @@
 import {
   Body,
   Controller,
-  HttpStatus,
   Post,
   Req,
   Res,
   UnauthorizedException,
-  InternalServerErrorException,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginUserDto } from 'src/user/dto/login-user.dto';
 import { Request, Response } from 'express';
+import { AuthGuard } from './auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -20,7 +20,10 @@ export class AuthController {
   async login(@Body() loginUserDto: LoginUserDto, @Res() res: Response) {
     const user = await this.authService.validateUser(loginUserDto);
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException({
+        result: 'ERROR',
+        message: '사용자를 찾을 수 없습니다.',
+      });
     }
 
     const token = this.authService.login(user);
@@ -35,7 +38,18 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
     });
 
-    return res.status(200).json({ message: 'login successful' });
+    return res.status(200).json({ message: 'login successful', data: user });
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('logout')
+  async logout(@Req() req: Request, @Res() res: Response) {
+    if (req.cookies['access_token']) {
+      res.clearCookie('access_token');
+    }
+    res.clearCookie('refresh_token');
+
+    return res.status(200).json({ result: 'SUCCESS' });
   }
 
   @Post('refresh')
@@ -43,7 +57,10 @@ export class AuthController {
     const refreshToken = req.cookies?.refresh_token;
 
     if (!refreshToken) {
-      throw new UnauthorizedException('Refresh token not found');
+      throw new UnauthorizedException({
+        result: 'ERROR',
+        message: 'Refresh token not found',
+      });
     }
 
     try {
@@ -61,7 +78,10 @@ export class AuthController {
       });
     } catch (err) {
       console.log('🚀 ~ AuthController ~ refresh ~ err:', err);
-      throw new InternalServerErrorException();
+      if (err.status === 401) {
+        res.clearCookie('refresh_token');
+      }
+      return res.status(err.status).json(err.response);
     }
   }
 }

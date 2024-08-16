@@ -20,7 +20,10 @@ export class CommentsService {
     // 댓글이 속한 게시물이 존재하는지 확인
     const post = await this.postModel.findByPk(postId);
     if (!post) {
-      throw new NotFoundException('Post not found');
+      throw new NotFoundException({
+        result: 'ERROR',
+        message: 'Post not found',
+      });
     }
 
     // 댓글 생성
@@ -97,13 +100,19 @@ export class CommentsService {
     const comment = await this.commentModel.findByPk(id);
 
     if (!comment) {
-      throw new NotFoundException('Comment not found');
+      throw new NotFoundException({
+        result: 'ERROR',
+        message: 'Comment not found',
+      });
     }
 
     const post = await this.postModel.findByPk(id);
 
     if (!post) {
-      throw new NotFoundException('Post not found');
+      throw new NotFoundException({
+        result: 'ERROR',
+        message: 'Post not found',
+      });
     }
 
     await comment.destroy();

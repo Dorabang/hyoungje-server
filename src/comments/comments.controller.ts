@@ -97,17 +97,23 @@ export class CommentsController {
 
     const comment = await this.commentsService.findOne(id);
     if (!payload.isAdmin && comment.userId !== payload.sub) {
-      throw new UnauthorizedException('접근 권한이 없는 사용자입니다.');
+      throw new UnauthorizedException({
+        result: 'ERROR',
+        message: '접근 권한이 없는 사용자입니다.',
+      });
     }
     if (!comment) {
-      throw new NotFoundException(`Comment ${id} not found`);
+      throw new NotFoundException({
+        result: 'ERROR',
+        message: `Comment ${id} not found`,
+      });
     }
     try {
       this.commentsService.update(id, { content });
       return res.status(200).json({ result: 'SUCCESS' });
     } catch (error) {
       console.log('🚀 ~ CommentsController ~ error:', error);
-      throw new InternalServerErrorException();
+      throw new InternalServerErrorException({ result: 'ERROR' });
     }
   }
 
@@ -124,10 +130,16 @@ export class CommentsController {
 
     const comment = await this.commentsService.findOne(id);
     if (!payload.isAdmin && comment.userId !== payload.sub) {
-      throw new UnauthorizedException('접근 권한이 없는 사용자입니다.');
+      throw new UnauthorizedException({
+        result: 'ERROR',
+        message: '접근 권한이 없는 사용자입니다.',
+      });
     }
     if (!comment) {
-      throw new NotFoundException('Comment not found');
+      throw new NotFoundException({
+        result: 'ERROR',
+        message: 'Comment not found',
+      });
     }
 
     try {
@@ -135,7 +147,7 @@ export class CommentsController {
       return res.status(200).json({ result: 'SUCCESS' });
     } catch (error) {
       console.log('🚀 ~ CommentsController ~ error:', error);
-      throw new InternalServerErrorException();
+      throw new InternalServerErrorException({ result: 'ERROR' });
     }
   }
 }
