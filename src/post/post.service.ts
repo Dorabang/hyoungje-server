@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Post } from './entity/post.entity';
 import { Comment } from 'src/comments/entity/comments.entity';
+import { UserService } from 'src/user/user.service';
+import { User } from 'src/user/entity/user.entity';
 
 @Injectable()
 export class PostService {
@@ -18,6 +20,7 @@ export class PostService {
 
   async findAll(
     marketType: string,
+    status: 'all' | 'sale' | 'sold-out' | 'reservation' = 'all',
     page: number = 1,
     size: number = 15,
     sort: string = 'createdAt',
@@ -33,7 +36,9 @@ export class PostService {
     const offset = (page - 1) * size;
 
     // 총 포스트 개수 가져오기
-    const totalResult = await this.postModel.count({ where: { marketType } });
+    const totalResult = await this.postModel.count({
+      where: { marketType, ...(status === 'all' ? null : { status }) },
+    });
 
     // 총 페이지 수
     const totalPages = Math.ceil(totalResult / size);
@@ -43,7 +48,13 @@ export class PostService {
 
     // 페이지네이션과 정렬을 적용하여 포스트 가져오기
     const posts = await this.postModel.findAll({
-      where: { marketType },
+      where: { marketType, ...(status === 'all' ? null : { status }) },
+      include: [
+        {
+          model: User,
+          attributes: ['displayName'], // User 모델에서 displayName만 포함하여 조회
+        },
+      ],
       limit: size,
       offset,
       order: [[sort, order]],
@@ -66,7 +77,19 @@ export class PostService {
   }
 
   async findOne(id: number): Promise<Post> {
-    return this.postModel.findByPk(id);
+    const post = await this.postModel.findByPk(id, {
+      include: [{ model: User, attributes: ['displayName'] }],
+    });
+
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+
+    // 조회수 증가
+    post.views += 1;
+    await post.save();
+
+    return post;
   }
 
   async update(id: number, post: Partial<Post>): Promise<void> {

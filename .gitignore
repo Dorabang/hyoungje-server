@@ -44,6 +44,10 @@ lerna-debug.log*
 
 # docker
 .dockerignore
+ok-dong-server.yml
+
+# nginx
+nginx.conf
 
 # temp directory
 .temp

@@ -59,7 +59,6 @@ export class PostController {
 
     if (validateUser) {
       const data = await this.postService.create({
-        views: 0,
         userId: user.sub,
         ...createPost,
       });
@@ -72,6 +71,7 @@ export class PostController {
   @Get()
   async findAll(
     @Query('marketType') marketType: string,
+    @Query('status') status: 'all' | 'sale' | 'sold-out' | 'reservation',
     @Query('page') page: number = 1,
     @Query('size') size: number = 10,
     @Query('sort') sort: string = 'createdAt',
@@ -84,7 +84,14 @@ export class PostController {
     totalPages: number;
     isLast: boolean;
   }> {
-    return await this.postService.findAll(marketType, page, size, sort, order);
+    return await this.postService.findAll(
+      marketType,
+      status,
+      page,
+      size,
+      sort,
+      order,
+    );
   }
 
   @Get(':id')

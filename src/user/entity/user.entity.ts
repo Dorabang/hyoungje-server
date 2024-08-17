@@ -1,4 +1,5 @@
-import { Column, DataType, Model, Table } from 'sequelize-typescript';
+import { Column, DataType, HasMany, Model, Table } from 'sequelize-typescript';
+import { Post } from 'src/post/entity/post.entity';
 
 @Table
 export class User extends Model<User> {
@@ -50,4 +51,7 @@ export class User extends Model<User> {
     allowNull: true,
   })
   phone: string;
+
+  @HasMany(() => Post)
+  posts: Post[];
 }

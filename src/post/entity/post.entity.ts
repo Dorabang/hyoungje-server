@@ -96,7 +96,7 @@ export class Post extends Model<Post> {
 
   @Column({
     type: DataType.INTEGER,
-    allowNull: false,
+    defaultValue: 0, // 조회수의 기본값을 0으로 설정
   })
   views: number;
 
