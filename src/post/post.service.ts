@@ -6,7 +6,6 @@ import { Op } from 'sequelize';
 import { Post } from './entity/post.entity';
 import { Comment } from 'src/comments/entity/comments.entity';
 import { User } from 'src/user/entity/user.entity';
-import { DocumentCounter } from 'src/documentCounter/entity/documentCounter.entity';
 import { DocumentCounterService } from 'src/documentCounter/documentCounter.service';
 
 @Injectable()
