@@ -1,21 +1,46 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { Op } from 'sequelize';
+
 import { Post } from './entity/post.entity';
 import { Comment } from 'src/comments/entity/comments.entity';
-import { UserService } from 'src/user/user.service';
 import { User } from 'src/user/entity/user.entity';
+import { DocumentCounter } from 'src/documentCounter/entity/documentCounter.entity';
+import { DocumentCounterService } from 'src/documentCounter/documentCounter.service';
 
 @Injectable()
 export class PostService {
   constructor(
     @InjectModel(Post)
     private readonly postModel: typeof Post,
+    private documentCounterService: DocumentCounterService,
     @InjectModel(Comment)
     private readonly commentModel: typeof Comment,
+    private readonly sequelize: Sequelize,
   ) {}
 
-  async create(post: Partial<Post>): Promise<Post> {
-    return this.postModel.create(post);
+  async create(post: Partial<Post>) {
+    const result = await this.sequelize.transaction(async (transaction) => {
+      const documentNumber =
+        await this.documentCounterService.getNextDocumentNumber(
+          post.marketType,
+          transaction,
+        );
+
+      // 새로운 게시물 생성
+      const newPost = await this.postModel.create(
+        {
+          ...post,
+          documentNumber,
+        },
+        { transaction },
+      );
+
+      return newPost;
+    });
+
+    return result;
   }
 
   async findAll(
@@ -90,6 +115,39 @@ export class PostService {
     await post.save();
 
     return post;
+  }
+
+  async findPrevAndNextPost(postId: number) {
+    const currentPost = await this.postModel.findByPk(postId);
+
+    if (!currentPost) {
+      return { previous: null, next: null }; // 현재 게시물이 없을 경우
+    }
+
+    // 현재 게시물의 ID를 기준으로 이전 게시물 찾기
+    const prev = await this.postModel.findOne({
+      where: {
+        postId: {
+          [Op.lt]: postId, // 현재 게시물보다 ID가 작은 게시물
+        },
+      },
+      order: [['postId', 'DESC']], // ID가 큰 것부터 작은 것 순서로 정렬
+    });
+
+    // 현재 게시물의 ID를 기준으로 다음 게시물 찾기
+    const next = await this.postModel.findOne({
+      where: {
+        postId: {
+          [Op.gt]: postId, // 현재 게시물보다 ID가 큰 게시물
+        },
+      },
+      order: [['postId', 'ASC']], // ID가 작은 것부터 큰 것 순서로 정렬
+    });
+
+    return {
+      previous: prev ? { title: prev.title, postId: prev.postId } : null,
+      next: next ? { title: next.title, postId: next.postId } : null,
+    };
   }
 
   async update(id: number, post: Partial<Post>): Promise<void> {

@@ -14,15 +14,18 @@ import {
   NotFoundException,
   UseInterceptors,
   UploadedFiles,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 import { PostService } from './post.service';
 import { Post as PostEntity } from './entity/post.entity';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { UserService } from 'src/user/user.service';
-import { FilesInterceptor } from '@nestjs/platform-express';
 import { UploadService } from 'src/upload/upload.service';
+import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 
 @Controller('posts')
 export class PostController {
@@ -36,7 +39,7 @@ export class PostController {
   @Post()
   @UseInterceptors(FilesInterceptor('image', 8))
   async create(
-    @Body() createPostDto: Partial<PostEntity>,
+    @Body() createPostDto: CreatePostDto,
     @UploadedFiles() files,
     @Req() req: Request,
     @Res() res: Response,
@@ -96,41 +99,55 @@ export class PostController {
 
   @Get(':id')
   async findOne(@Param('id') id: number, @Res() res: Response) {
-    const post = await this.postService.findOne(id);
-    if (!post) {
+    // 현재 게시물의 ID를 기준으로 이전과 다음 게시물을 찾기 위해 현재 게시물의 정보를 먼저 가져옵니다.
+    try {
+      const post = await this.postService.findOne(id);
+
+      if (!post) {
+        return res
+          .status(404)
+          .json({ message: '해당 게시물을 찾을 수 없습니다.' });
+      }
+
+      const prevAndNext = await this.postService.findPrevAndNextPost(id);
+
       return res
-        .status(404)
-        .json({ message: '해당 게시물을 찾을 수 없습니다.' });
+        .status(200)
+        .json({ result: 'SUCCESS', data: { post, ...prevAndNext } });
+    } catch (error) {
+      console.log('🚀 ~ PostController ~ findOne ~ error:', error);
+      throw new InternalServerErrorException({ result: 'ERROR' });
     }
-    return res.status(200).json({ result: 'SUCCESS', data: post });
   }
 
   @UseGuards(AuthGuard)
-  @Put(':id')
   @UseInterceptors(FilesInterceptor('updateImage', 8))
+  @Put(':id')
   async update(
     @Param('id') id: number,
-    @Body() updatePostDto: Partial<PostEntity>,
     @UploadedFiles() files,
+    @Body() updatePostDto: UpdatePostDto,
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    const payload: any = req.user;
-    const user = await this.userService.getByUserId(payload.userId);
-    const post = await this.postService.findOne(id);
-
-    if (!payload.isAdmin && user.id !== post.userId) {
-      throw new UnauthorizedException({
-        result: 'ERROR',
-        message: '접근 권한이 없는 사용자입니다.',
-      });
-    }
-
     try {
+      const payload: any = req.user;
+      const user = await this.userService.getByUserId(payload.userId);
+      const post = await this.postService.findOne(id);
+
+      if (!payload.isAdmin && user.id !== post.userId) {
+        throw new UnauthorizedException({
+          result: 'ERROR',
+          message: '접근 권한이 없는 사용자입니다.',
+        });
+      }
+
       const updatePost = { ...updatePostDto };
+      delete updatePost.prevImage;
 
       if (files) {
         const imageUrl: string[] = [];
+
         await Promise.all(
           files.map(async (file: Express.Multer.File) => {
             const key = await this.uploadService.uploadImage(file);
@@ -138,7 +155,10 @@ export class PostController {
           }),
         );
 
-        updatePost['image'] = [...updatePostDto.image, ...imageUrl];
+        const prevImage = updatePostDto?.prevImage
+          ? updatePostDto.prevImage.split(',')
+          : null;
+        updatePost['image'] = [...prevImage, ...imageUrl];
       }
 
       this.postService.update(id, updatePost);

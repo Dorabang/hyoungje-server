@@ -118,6 +118,9 @@ export class Post extends Model<Post> {
   })
   marketType: string;
 
+  @Column(DataType.INTEGER)
+  documentNumber: number;
+
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
