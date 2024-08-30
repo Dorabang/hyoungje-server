@@ -25,7 +25,9 @@ export class UploadService {
 
     const [fileName, ..._rest] = file.originalname.split('.');
 
-    const key = `images/${Date.now()}${fileName}.jpg`;
+    const directoryName =
+      process.env.NODE_ENV === 'development' ? 'development' : 'images';
+    const key = `${directoryName}/${Date.now()}${fileName}.jpg`;
     const params: AWS.S3.PutObjectRequest = {
       Bucket: process.env.AWS_BUCKET_NAME,
       ACL: 'private',
