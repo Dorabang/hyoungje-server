@@ -22,7 +22,7 @@ export class AuthController {
     if (!user) {
       throw new UnauthorizedException({
         result: 'ERROR',
-        message: '사용자를 찾을 수 없습니다.',
+        message: '아이디 혹은 비밀번호를 잘못 입력하셨습니다.',
       });
     }
 
@@ -38,7 +38,7 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
     });
 
-    return res.status(200).json({ message: 'login successful', data: user });
+    return res.status(200).json({ message: 'login successful' });
   }
 
   @UseGuards(AuthGuard)
@@ -57,6 +57,7 @@ export class AuthController {
     const refreshToken = req.cookies?.refresh_token;
 
     if (!refreshToken) {
+      res.clearCookie('refresh_token');
       throw new UnauthorizedException({
         result: 'ERROR',
         message: 'Refresh token not found',
