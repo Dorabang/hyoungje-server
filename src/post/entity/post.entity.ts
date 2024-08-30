@@ -41,20 +41,20 @@ export class Post extends Model<Post> {
   title: string;
 
   @Column({
-    type: DataType.INTEGER,
-    allowNull: false,
+    type: DataType.STRING,
+    allowNull: true,
   })
-  amount: number;
+  amount: string;
 
   @Column({
     type: DataType.STRING,
-    allowNull: false,
+    allowNull: true,
   })
   date: string;
 
   @Column({
     type: DataType.STRING,
-    allowNull: false,
+    allowNull: true,
   })
   height: string;
 
@@ -66,31 +66,31 @@ export class Post extends Model<Post> {
 
   @Column({
     type: DataType.STRING,
-    allowNull: false,
+    allowNull: true,
   })
   phone: string;
 
   @Column({
     type: DataType.STRING,
-    allowNull: false,
+    allowNull: true,
   })
   place: string;
 
   @Column({
     type: DataType.STRING,
-    allowNull: false,
+    allowNull: true,
   })
   price: string;
 
   @Column({
     type: DataType.ENUM('sale', 'sold-out', 'reservation'),
-    allowNull: false,
+    allowNull: true,
   })
   status: 'sale' | 'sold-out' | 'reservation';
 
   @Column({
     type: DataType.STRING,
-    allowNull: false,
+    allowNull: true,
   })
   variant: string;
 
@@ -102,7 +102,7 @@ export class Post extends Model<Post> {
 
   @Column({
     type: DataType.STRING,
-    allowNull: false,
+    allowNull: true,
   })
   width: string;
 

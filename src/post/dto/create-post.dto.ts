@@ -16,9 +16,9 @@ export class CreatePostDto {
   @IsNotEmpty()
   title: string;
 
-  @IsNumber()
+  @IsString()
   @IsOptional()
-  amount?: number;
+  amount?: string;
 
   @IsString()
   @IsOptional()

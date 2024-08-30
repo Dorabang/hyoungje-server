@@ -19,9 +19,9 @@ export class UpdatePostDto {
   @IsOptional()
   title?: string; // 제목, 선택적
 
-  @IsNumber()
+  @IsString()
   @IsOptional()
-  amount?: number; // 수량, 선택적
+  amount?: string; // 수량, 선택적
 
   @IsString()
   @IsOptional()
