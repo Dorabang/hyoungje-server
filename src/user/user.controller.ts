@@ -33,7 +33,7 @@ export class UserController {
   @UseInterceptors(FileInterceptor('profile'))
   async create(
     @Body() createUserDto: CreateUserDto,
-    @UploadedFile() file: File,
+    @UploadedFile() file,
   ): Promise<{ result: 'SUCCESS' | 'ERROR' }> {
     const createUser = { ...createUserDto };
     if (file) {
@@ -118,7 +118,7 @@ export class UserController {
   @UseInterceptors(FileInterceptor('profile'))
   async update(
     @Body() updateUserDto: UpdateUserDto,
-    @UploadedFile() file: File,
+    @UploadedFile() file,
     @Req() req: Request,
     @Res() res: Response,
   ) {

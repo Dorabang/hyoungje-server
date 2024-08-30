@@ -37,7 +37,7 @@ export class PostController {
   @UseInterceptors(FilesInterceptor('image', 8))
   async create(
     @Body() createPostDto: Partial<PostEntity>,
-    @UploadedFiles() file: File[],
+    @UploadedFiles() files,
     @Req() req: Request,
     @Res() res: Response,
   ) {
@@ -45,10 +45,10 @@ export class PostController {
     const validateUser = this.userService.getByUserId(user.userId);
     const createPost = { ...createPostDto };
 
-    if (file) {
+    if (files) {
       const imageUrl: string[] = [];
       await Promise.all(
-        file.map(async (file) => {
+        files.map(async (file: Express.Multer.File) => {
           const key = await this.uploadService.uploadImage(file);
           imageUrl.push(process.env.AWS_BUCKET_ADDRESS + key);
         }),
@@ -111,7 +111,7 @@ export class PostController {
   async update(
     @Param('id') id: number,
     @Body() updatePostDto: Partial<PostEntity>,
-    @UploadedFiles() file: File[],
+    @UploadedFiles() files,
     @Req() req: Request,
     @Res() res: Response,
   ) {
@@ -129,10 +129,10 @@ export class PostController {
     try {
       const updatePost = { ...updatePostDto };
 
-      if (file) {
+      if (files) {
         const imageUrl: string[] = [];
         await Promise.all(
-          file.map(async (file) => {
+          files.map(async (file: Express.Multer.File) => {
             const key = await this.uploadService.uploadImage(file);
             imageUrl.push(process.env.AWS_BUCKET_ADDRESS + key);
           }),
