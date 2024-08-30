@@ -12,11 +12,11 @@ import { AuthModule } from './auth/auth.module';
 import { CommentsModule } from './comments/comments.module';
 import { Comment } from './comments/entity/comments.entity';
 import { UploadModule } from './upload/upload.module';
+import { DocumentCounterModule } from './documentCounter/documentCounter.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
       isGlobal: true,
     }),
     SequelizeModule.forRoot({
@@ -36,6 +36,7 @@ import { UploadModule } from './upload/upload.module';
     AuthModule,
     CommentsModule,
     UploadModule,
+    DocumentCounterModule,
   ],
   controllers: [AppController],
   providers: [AppService],
