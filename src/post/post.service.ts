@@ -76,7 +76,16 @@ export class PostService {
       include: [
         {
           model: User,
-          attributes: ['displayName'], // User 모델에서 displayName만 포함하여 조회
+          as: 'user', // Post의 작성자 정보
+          attributes: ['displayName'],
+        },
+        {
+          model: User,
+          as: 'bookmarkedBy', // 북마크한 사용자 정보
+          attributes: ['id'],
+          through: {
+            attributes: [], // Bookmark 테이블의 중간 데이터를 제외
+          },
         },
       ],
       limit: size,
@@ -102,7 +111,21 @@ export class PostService {
 
   async findOne(id: number): Promise<Post> {
     const post = await this.postModel.findByPk(id, {
-      include: [{ model: User, attributes: ['displayName'] }],
+      include: [
+        {
+          model: User,
+          as: 'user', // Post의 작성자 정보
+          attributes: ['displayName'],
+        },
+        {
+          model: User,
+          as: 'bookmarkedBy', // 북마크한 사용자 정보
+          attributes: ['id'],
+          through: {
+            attributes: [], // Bookmark 테이블의 중간 데이터를 제외
+          },
+        },
+      ],
     });
 
     if (!post) {

@@ -25,7 +25,7 @@ export class AuthService {
     }
 
     if (user && passwordValid) {
-      const { password, isAdmin, bookmark, ...result } = user;
+      const { password, isAdmin, ...result } = user;
       return result;
     }
     return null;

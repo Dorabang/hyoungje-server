@@ -51,7 +51,7 @@ export class PostController {
     if (files) {
       const imageUrl: string[] = [];
       await Promise.all(
-        files.map(async (file: Express.Multer.File) => {
+        files.map(async (file) => {
           const key = await this.uploadService.uploadImage(file);
           imageUrl.push(process.env.AWS_BUCKET_ADDRESS + key);
         }),
@@ -149,7 +149,7 @@ export class PostController {
         const imageUrl: string[] = [];
 
         await Promise.all(
-          files.map(async (file: Express.Multer.File) => {
+          files.map(async (file) => {
             const key = await this.uploadService.uploadImage(file);
             imageUrl.push(process.env.AWS_BUCKET_ADDRESS + key);
           }),

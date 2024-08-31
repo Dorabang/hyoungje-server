@@ -13,6 +13,9 @@ import { CommentsModule } from './comments/comments.module';
 import { Comment } from './comments/entity/comments.entity';
 import { UploadModule } from './upload/upload.module';
 import { DocumentCounterModule } from './documentCounter/documentCounter.module';
+import { BookmarksModule } from './bookmarks/bookmark.module';
+import { DocumentCounter } from './documentCounter/entity/documentCounter.entity';
+import { Bookmark } from './bookmarks/entity/bookmark.entity';
 
 @Module({
   imports: [
@@ -26,7 +29,7 @@ import { DocumentCounterModule } from './documentCounter/documentCounter.module'
       username: process.env.POSTGRES_USER,
       password: process.env.POSTGRES_PASSWORD,
       database: process.env.POSTGRES_DB,
-      models: [User, Post, Comment],
+      models: [User, Post, Comment, DocumentCounter, Bookmark],
       autoLoadModels: true,
       synchronize: true,
       logging: true,
@@ -37,6 +40,7 @@ import { DocumentCounterModule } from './documentCounter/documentCounter.module'
     CommentsModule,
     UploadModule,
     DocumentCounterModule,
+    BookmarksModule,
   ],
   controllers: [AppController],
   providers: [AppService],

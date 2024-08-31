@@ -1,5 +1,6 @@
 import {
   BelongsTo,
+  BelongsToMany,
   Column,
   DataType,
   ForeignKey,
@@ -9,6 +10,7 @@ import {
 } from 'sequelize-typescript';
 import { Comment } from 'src/comments/entity/comments.entity';
 import { User } from 'src/user/entity/user.entity';
+import { Bookmark } from 'src/bookmarks/entity/bookmark.entity';
 
 @Table({
   tableName: 'posts',
@@ -57,12 +59,6 @@ export class Post extends Model<Post> {
     allowNull: true,
   })
   height: string;
-
-  @Column({
-    type: DataType.ARRAY(DataType.STRING),
-    allowNull: true,
-  })
-  bookmark: string[];
 
   @Column({
     type: DataType.STRING,
@@ -127,6 +123,9 @@ export class Post extends Model<Post> {
     defaultValue: 0,
   })
   commentCount: number; // 댓글 수 칼럼
+
+  @BelongsToMany(() => User, () => Bookmark) // 북마크한 사용자들
+  bookmarkedBy: User[];
 
   @HasMany(() => Comment)
   comments: Comment[];

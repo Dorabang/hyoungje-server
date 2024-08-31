@@ -1,5 +1,13 @@
-import { Column, DataType, HasMany, Model, Table } from 'sequelize-typescript';
+import {
+  BelongsToMany,
+  Column,
+  DataType,
+  HasMany,
+  Model,
+  Table,
+} from 'sequelize-typescript';
 import { Post } from 'src/post/entity/post.entity';
+import { Bookmark } from 'src/bookmarks/entity/bookmark.entity';
 
 @Table
 export class User extends Model<User> {
@@ -35,10 +43,8 @@ export class User extends Model<User> {
   })
   displayName: string;
 
-  @Column({
-    type: DataType.STRING,
-  })
-  bookmark: string[];
+  @BelongsToMany(() => Post, () => Bookmark) // 북마크한 게시물들
+  bookmarkedPosts: Post[];
 
   @Column({
     type: DataType.STRING,

@@ -64,7 +64,7 @@ export class UserController {
     if (!user) {
       throw new UnauthorizedException({ result: 'ERROR' });
     }
-    const { password, bookmark, ...userInfo } = user;
+    const { password, ...userInfo } = user;
 
     return res.status(200).json({ result: 'SUCCESS', data: userInfo });
   }

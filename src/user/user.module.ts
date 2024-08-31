@@ -4,10 +4,11 @@ import { User } from './entity/user.entity';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { UploadModule } from 'src/upload/upload.module';
+import { Bookmark } from 'src/bookmarks/entity/bookmark.entity';
 
 @Global()
 @Module({
-  imports: [SequelizeModule.forFeature([User]), UploadModule],
+  imports: [SequelizeModule.forFeature([User, Bookmark]), UploadModule],
   controllers: [UserController],
   providers: [UserService],
   exports: [UserService],
