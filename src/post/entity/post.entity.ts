@@ -1,5 +1,6 @@
 import {
   BelongsTo,
+  BelongsToMany,
   Column,
   DataType,
   ForeignKey,
@@ -9,6 +10,7 @@ import {
 } from 'sequelize-typescript';
 import { Comment } from 'src/comments/entity/comments.entity';
 import { User } from 'src/user/entity/user.entity';
+import { Bookmark } from 'src/bookmarks/entity/bookmark.entity';
 
 @Table({
   tableName: 'posts',
@@ -41,68 +43,62 @@ export class Post extends Model<Post> {
   title: string;
 
   @Column({
-    type: DataType.INTEGER,
-    allowNull: false,
+    type: DataType.STRING,
+    allowNull: true,
   })
-  amount: number;
+  amount: string;
 
   @Column({
     type: DataType.STRING,
-    allowNull: false,
+    allowNull: true,
   })
   date: string;
 
   @Column({
     type: DataType.STRING,
-    allowNull: false,
+    allowNull: true,
   })
   height: string;
 
   @Column({
-    type: DataType.ARRAY(DataType.STRING),
-    allowNull: true,
-  })
-  bookmark: string[];
-
-  @Column({
     type: DataType.STRING,
-    allowNull: false,
+    allowNull: true,
   })
   phone: string;
 
   @Column({
     type: DataType.STRING,
-    allowNull: false,
+    allowNull: true,
   })
   place: string;
 
   @Column({
     type: DataType.STRING,
-    allowNull: false,
+    allowNull: true,
   })
   price: string;
 
   @Column({
     type: DataType.ENUM('sale', 'sold-out', 'reservation'),
-    allowNull: false,
+    allowNull: true,
   })
   status: 'sale' | 'sold-out' | 'reservation';
 
   @Column({
     type: DataType.STRING,
-    allowNull: false,
+    allowNull: true,
   })
   variant: string;
 
   @Column({
     type: DataType.INTEGER,
-    allowNull: false,
+    defaultValue: 0, // 조회수의 기본값을 0으로 설정
   })
   views: number;
 
   @Column({
     type: DataType.STRING,
-    allowNull: false,
+    allowNull: true,
   })
   width: string;
 
@@ -118,12 +114,18 @@ export class Post extends Model<Post> {
   })
   marketType: string;
 
+  @Column(DataType.INTEGER)
+  documentNumber: number;
+
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
     defaultValue: 0,
   })
   commentCount: number; // 댓글 수 칼럼
+
+  @BelongsToMany(() => User, () => Bookmark) // 북마크한 사용자들
+  bookmarkedBy: User[];
 
   @HasMany(() => Comment)
   comments: Comment[];

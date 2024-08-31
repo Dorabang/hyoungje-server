@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Comment } from 'src/comments/entity/comments.entity';
 import { Post } from 'src/post/entity/post.entity';
+import { User } from 'src/user/entity/user.entity';
 
 @Injectable()
 export class CommentsService {
@@ -70,6 +71,7 @@ export class CommentsService {
     // 특정 게시물의 모든 댓글 가져오기
     const comments = await this.commentModel.findAll({
       where: { postId },
+      include: [{ model: User, attributes: ['displayName'] }],
       limit: size,
       offset,
       order: [[sort, order]],
@@ -106,7 +108,7 @@ export class CommentsService {
       });
     }
 
-    const post = await this.postModel.findByPk(id);
+    const post = await this.postModel.findByPk(comment.postId);
 
     if (!post) {
       throw new NotFoundException({

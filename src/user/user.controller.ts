@@ -33,7 +33,7 @@ export class UserController {
   @UseInterceptors(FileInterceptor('profile'))
   async create(
     @Body() createUserDto: CreateUserDto,
-    @UploadedFile() file: File,
+    @UploadedFile() file,
   ): Promise<{ result: 'SUCCESS' | 'ERROR' }> {
     const createUser = { ...createUserDto };
     if (file) {
@@ -64,7 +64,7 @@ export class UserController {
     if (!user) {
       throw new UnauthorizedException({ result: 'ERROR' });
     }
-    const { password, isAdmin, bookmark, ...userInfo } = user;
+    const { password, ...userInfo } = user;
 
     return res.status(200).json({ result: 'SUCCESS', data: userInfo });
   }
@@ -118,7 +118,7 @@ export class UserController {
   @UseInterceptors(FileInterceptor('profile'))
   async update(
     @Body() updateUserDto: UpdateUserDto,
-    @UploadedFile() file: File,
+    @UploadedFile() file,
     @Req() req: Request,
     @Res() res: Response,
   ) {

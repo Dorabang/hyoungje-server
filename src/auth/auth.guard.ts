@@ -13,6 +13,7 @@ export class AuthGuard extends NestAuthGuard('jwt') {
     if (!accessToken) {
       throw new UnauthorizedException({
         result: 'ERROR',
+        code: 'T001',
         message: 'Access token is required.',
       });
     }
@@ -23,6 +24,7 @@ export class AuthGuard extends NestAuthGuard('jwt') {
       console.log('🚀 ~ AuthGuard ~ canActivate ~ _error:', error);
       throw new UnauthorizedException({
         result: 'ERROR',
+        code: 'T002',
         message: 'Invalid access token.',
       });
     }

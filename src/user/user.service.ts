@@ -41,20 +41,20 @@ export class UserService {
   }
 
   async getByUserId(userId: string) {
-    const user = User.findOne({
+    const user = await User.findOne({
       where: {
         userId: userId,
       },
     });
 
-    if (!user) {
+    if (!user || !user?.dataValues) {
       throw new UnauthorizedException({
         result: 'ERROR',
         message: '접근 권한이 없는 사용자입니다.',
       });
     }
 
-    return (await user).dataValues;
+    return user.dataValues;
   }
 
   async getByUserNickname(userDto: CreateUserDto) {

@@ -9,15 +9,19 @@ import {
 export class UpdatePostDto {
   @IsArray()
   @IsOptional()
-  image?: string[]; // 이미지 URL 배열, 선택적
+  prevImage?: string; // 이미지 URL 배열, 선택적
+
+  @IsArray()
+  @IsOptional()
+  updateImage?: any[]; // 이미지 URL 배열, 선택적
 
   @IsString()
   @IsOptional()
   title?: string; // 제목, 선택적
 
-  @IsNumber()
+  @IsString()
   @IsOptional()
-  amount?: number; // 수량, 선택적
+  amount?: string; // 수량, 선택적
 
   @IsString()
   @IsOptional()
