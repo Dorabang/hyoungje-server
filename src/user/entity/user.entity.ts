@@ -56,7 +56,19 @@ export class User extends Model<User> {
     type: DataType.STRING,
     allowNull: true,
   })
-  phone: string;
+  email: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  verificationCode: string;
+
+  @Column({
+    type: DataType.BOOLEAN,
+    defaultValue: false,
+  })
+  isVerified: boolean;
 
   @HasMany(() => Post)
   posts: Post[];

@@ -6,14 +6,17 @@ import { AuthService } from 'src/auth/auth.service';
 import { AuthController } from 'src/auth/auth.controller';
 import { JwtStrategy } from 'src/auth/jwt.strategy';
 import { AuthGuard } from './auth.guard';
+import { SequelizeModule } from '@nestjs/sequelize';
+import { User } from 'src/user/entity/user.entity';
 
 @Global()
 @Module({
   imports: [
+    SequelizeModule.forFeature([User]),
     forwardRef(() => UserModule),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'secretKey',
-      signOptions: { expiresIn: process.env.JWT_EXPIRATION_TIME || '1h' },
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: process.env.JWT_EXPIRATION_TIME },
     }),
   ],
   controllers: [AuthController],

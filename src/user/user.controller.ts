@@ -34,7 +34,8 @@ export class UserController {
   async create(
     @Body() createUserDto: CreateUserDto,
     @UploadedFile() file,
-  ): Promise<{ result: 'SUCCESS' | 'ERROR' }> {
+    @Res() res: Response,
+  ) {
     const createUser = { ...createUserDto };
     if (file) {
       const key = await this.uploadService.uploadImage(file);
@@ -43,8 +44,22 @@ export class UserController {
     }
     createUser['isAdmin'] = false;
     try {
-      this.userService.createUser(createUser);
-      return { result: 'SUCCESS' };
+      const token = await this.userService.createUser(createUser);
+
+      res.cookie('access_token', (await token).access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 1 * 60 * 60 * 1000, // 1시간
+      });
+      res.cookie('refresh_token', (await token).refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
+      });
+
+      return res
+        .status(200)
+        .json({ result: 'SUCCESS', message: 'login successful' });
     } catch (error) {
       console.log('🚀 ~ UserController ~ error:', error);
       throw new InternalServerErrorException({ result: 'ERROR' });
@@ -64,7 +79,7 @@ export class UserController {
     if (!user) {
       throw new UnauthorizedException({ result: 'ERROR' });
     }
-    const { password, ...userInfo } = user;
+    const { password, verificationCode, ...userInfo } = user;
 
     return res.status(200).json({ result: 'SUCCESS', data: userInfo });
   }

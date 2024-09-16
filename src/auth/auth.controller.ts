@@ -7,9 +7,10 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { Request, Response } from 'express';
+
 import { AuthService } from './auth.service';
 import { LoginUserDto } from 'src/user/dto/login-user.dto';
-import { Request, Response } from 'express';
 import { AuthGuard } from './auth.guard';
 
 @Controller('auth')
@@ -38,7 +39,9 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
     });
 
-    return res.status(200).json({ message: 'login successful' });
+    return res
+      .status(200)
+      .json({ result: 'SUCCESS', message: 'login successful' });
   }
 
   @UseGuards(AuthGuard)
@@ -58,8 +61,10 @@ export class AuthController {
 
     if (!refreshToken) {
       res.clearCookie('refresh_token');
+      res.redirect('http://localhost:3000/login');
       throw new UnauthorizedException({
         result: 'ERROR',
+        code: 'T003',
         message: 'Refresh token not found',
       });
     }
@@ -84,5 +89,28 @@ export class AuthController {
       }
       return res.status(err.status).json(err.response);
     }
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/sendcode')
+  async sendCode(@Req() req: Request): Promise<void> {
+    const payload: any = req.user;
+
+    return this.authService.sendVerificationCode(payload.sub);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/confirmcode')
+  async confirmCode(
+    @Body('verificationCode') verificationCode: string,
+    @Req() req: Request,
+  ): Promise<object> {
+    console.log('🚀 ~ AuthController ~ verificationCode:', verificationCode);
+    const payload: any = req.user;
+
+    return this.authService.confirmVerificationCode(
+      verificationCode,
+      payload.sub,
+    );
   }
 }

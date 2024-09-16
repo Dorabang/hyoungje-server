@@ -1,19 +1,25 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
+  InternalServerErrorException,
   UnauthorizedException,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import * as bcrypt from 'bcrypt';
 
 import { User } from './entity/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(User)
     private userModel: typeof User,
+    @Inject(forwardRef(() => AuthService))
+    private authService: AuthService,
   ) {}
 
   async createUser(userDto: CreateUserDto) {
@@ -23,6 +29,7 @@ export class UserService {
         userId: userDto.userId,
       },
     });
+
     if (duplicatedUser === null) {
       throw new ConflictException({
         result: 'ERROR',
@@ -37,7 +44,9 @@ export class UserService {
         message: '이미 등록되어 있는 닉네임입니다.',
       });
     }
-    return await User.create(userDto);
+    const user = await User.create(userDto);
+
+    return await this.authService.login(user);
   }
 
   async getByUserId(userId: string) {
@@ -109,5 +118,38 @@ export class UserService {
       });
     }
     return bcrypt.hash(password, 10);
+  }
+
+  async isVerified(verificationCode: string, userId: number): Promise<void> {
+    try {
+      const user = await this.userModel.findByPk(userId);
+      user.verificationCode = verificationCode;
+      user.isVerified = true;
+
+      await user.save();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        '인증 코드 확인 중 오류가 발생했습니다.',
+      );
+    }
+  }
+
+  async clearVerificationCode(
+    email: string,
+    verificationCode: string,
+  ): Promise<void> {
+    try {
+      const user = await this.userModel.findOne({
+        where: { email, verificationCode },
+      });
+
+      user.verificationCode = null;
+
+      await user.save();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        '인증 코드 제거 중 오류가 발생했습니다.',
+      );
+    }
   }
 }
