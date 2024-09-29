@@ -2,24 +2,24 @@ import {
   ConflictException,
   Inject,
   Injectable,
-  InternalServerErrorException,
   UnauthorizedException,
   forwardRef,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
 import * as bcrypt from 'bcrypt';
 
 import { User } from './entity/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { AuthService } from 'src/auth/auth.service';
+import { EmailRepository } from 'src/email/email.repository';
+import { UserRepository } from './user.repository';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel(User)
-    private userModel: typeof User,
     @Inject(forwardRef(() => AuthService))
     private authService: AuthService,
+    private readonly userRepository: UserRepository,
+    private readonly emailRepository: EmailRepository,
   ) {}
 
   async createUser(userDto: CreateUserDto) {
@@ -75,26 +75,6 @@ export class UserService {
     });
   }
 
-  async create(user: Partial<User>): Promise<User> {
-    return this.userModel.create(user);
-  }
-
-  async findAll(): Promise<User[]> {
-    return this.userModel.findAll();
-  }
-
-  async findOne(id: number): Promise<User> {
-    return this.userModel.findByPk(id);
-  }
-
-  async update(id: number, user: Partial<User>): Promise<void> {
-    await this.userModel.update(user, { where: { id } });
-  }
-
-  async remove(id: number): Promise<void> {
-    await this.userModel.destroy({ where: { id } });
-  }
-
   /**
    * 해시 비밀번호 검증 함수
    *
@@ -120,36 +100,27 @@ export class UserService {
     return bcrypt.hash(password, 10);
   }
 
-  async isVerified(verificationCode: string, userId: number): Promise<void> {
-    try {
-      const user = await this.userModel.findByPk(userId);
-      user.verificationCode = verificationCode;
-      user.isVerified = true;
+  async registerEmail(email: string, id: number) {
+    const emailRecord = await this.emailRepository.findEmail(email);
 
-      await user.save();
-    } catch (error) {
-      throw new InternalServerErrorException(
-        '인증 코드 확인 중 오류가 발생했습니다.',
-      );
+    if (!emailRecord) {
+      return '인증되지 않은 이메일입니다.';
     }
-  }
 
-  async clearVerificationCode(
-    email: string,
-    verificationCode: string,
-  ): Promise<void> {
+    const user = await this.userRepository.findOne(id);
+
+    if (!user) {
+      return '사용자를 찾을 수 없습니다.';
+    }
+
     try {
-      const user = await this.userModel.findOne({
-        where: { email, verificationCode },
-      });
+      const result = await user.update('email', email);
 
-      user.verificationCode = null;
+      await this.emailRepository.deleteEmail(email);
 
-      await user.save();
+      return result;
     } catch (error) {
-      throw new InternalServerErrorException(
-        '인증 코드 제거 중 오류가 발생했습니다.',
-      );
+      console.log('🚀 ~ UserService ~ registerEmail ~ error:', error);
     }
   }
 }

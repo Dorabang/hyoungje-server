@@ -16,6 +16,7 @@ import { DocumentCounterModule } from './documentCounter/documentCounter.module'
 import { BookmarksModule } from './bookmarks/bookmark.module';
 import { DocumentCounter } from './documentCounter/entity/documentCounter.entity';
 import { Bookmark } from './bookmarks/entity/bookmark.entity';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { Bookmark } from './bookmarks/entity/bookmark.entity';
     UploadModule,
     DocumentCounterModule,
     BookmarksModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService],
