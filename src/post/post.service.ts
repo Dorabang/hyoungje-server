@@ -191,4 +191,10 @@ export class PostService {
     await post.destroy();
     comments.forEach(async (comment) => await comment.destroy());
   }
+
+  async getSitemapPosts() {
+    return await this.postModel.findAll({
+      attributes: ['id', 'updatedAt', 'marketType'],
+    });
+  }
 }

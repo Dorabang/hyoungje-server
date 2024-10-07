@@ -26,6 +26,7 @@ import { UserService } from 'src/user/user.service';
 import { UploadService } from 'src/upload/upload.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { PrevPostDto } from './dto/prev-post.dto';
 
 @Controller('posts')
 export class PostController {
@@ -95,6 +96,11 @@ export class PostController {
       sort,
       order,
     );
+  }
+
+  @Get('sitemap')
+  async getSitemapPosts() {
+    return this.postService.getSitemapPosts();
   }
 
   @Get(':id')
@@ -169,6 +175,25 @@ export class PostController {
         .status(404)
         .json({ result: 'ERROR', message: '해당 게시물을 찾을 수 없습니다.' });
     }
+  }
+
+  @Post('prevPosts')
+  async prevDataUpload(@Body() prevPostDto: PrevPostDto) {
+    const prevPost = { ...prevPostDto, views: Number(prevPostDto.views) };
+
+    if (prevPost.image) {
+      const imageUrl: string[] = [];
+      await Promise.all(
+        prevPost.image.map(async (item) => {
+          const key = await this.uploadService.uploadFromUrl(item);
+          imageUrl.push(process.env.AWS_BUCKET_ADDRESS + key);
+        }),
+      );
+
+      prevPost['image'] = imageUrl;
+    }
+
+    await this.postService.create(prevPost);
   }
 
   @UseGuards(AuthGuard)
