@@ -17,6 +17,10 @@ import { BookmarksModule } from './bookmarks/bookmark.module';
 import { DocumentCounter } from './documentCounter/entity/documentCounter.entity';
 import { Bookmark } from './bookmarks/entity/bookmark.entity';
 import { EmailModule } from './email/email.module';
+import { Channel } from './youtube/entity/channel.entity';
+import { Playlist } from './youtube/entity/playlist.entity';
+import { YoutubeModule } from './youtube/youtube.module';
+import { Email } from './email/entity/email.entity';
 
 @Module({
   imports: [
@@ -30,7 +34,16 @@ import { EmailModule } from './email/email.module';
       username: process.env.POSTGRES_USER,
       password: process.env.POSTGRES_PASSWORD,
       database: process.env.POSTGRES_DB,
-      models: [User, Post, Comment, DocumentCounter, Bookmark],
+      models: [
+        User,
+        Post,
+        Comment,
+        DocumentCounter,
+        Bookmark,
+        Email,
+        Channel,
+        Playlist,
+      ],
       autoLoadModels: true,
       synchronize: true,
       logging: true,
@@ -43,6 +56,7 @@ import { EmailModule } from './email/email.module';
     DocumentCounterModule,
     BookmarksModule,
     EmailModule,
+    YoutubeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
