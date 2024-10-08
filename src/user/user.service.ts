@@ -1,19 +1,25 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   UnauthorizedException,
+  forwardRef,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
 import * as bcrypt from 'bcrypt';
 
 import { User } from './entity/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { AuthService } from 'src/auth/auth.service';
+import { EmailRepository } from 'src/email/email.repository';
+import { UserRepository } from './user.repository';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel(User)
-    private userModel: typeof User,
+    @Inject(forwardRef(() => AuthService))
+    private authService: AuthService,
+    private readonly userRepository: UserRepository,
+    private readonly emailRepository: EmailRepository,
   ) {}
 
   async createUser(userDto: CreateUserDto) {
@@ -23,6 +29,7 @@ export class UserService {
         userId: userDto.userId,
       },
     });
+
     if (duplicatedUser === null) {
       throw new ConflictException({
         result: 'ERROR',
@@ -37,7 +44,9 @@ export class UserService {
         message: '이미 등록되어 있는 닉네임입니다.',
       });
     }
-    return await User.create(userDto);
+    const user = await User.create(userDto);
+
+    return await this.authService.login(user);
   }
 
   async getByUserId(userId: string) {
@@ -66,26 +75,6 @@ export class UserService {
     });
   }
 
-  async create(user: Partial<User>): Promise<User> {
-    return this.userModel.create(user);
-  }
-
-  async findAll(): Promise<User[]> {
-    return this.userModel.findAll();
-  }
-
-  async findOne(id: number): Promise<User> {
-    return this.userModel.findByPk(id);
-  }
-
-  async update(id: number, user: Partial<User>): Promise<void> {
-    await this.userModel.update(user, { where: { id } });
-  }
-
-  async remove(id: number): Promise<void> {
-    await this.userModel.destroy({ where: { id } });
-  }
-
   /**
    * 해시 비밀번호 검증 함수
    *
@@ -109,5 +98,29 @@ export class UserService {
       });
     }
     return bcrypt.hash(password, 10);
+  }
+
+  async registerEmail(email: string, id: number) {
+    const emailRecord = await this.emailRepository.findEmail(email);
+
+    if (!emailRecord) {
+      return '인증되지 않은 이메일입니다.';
+    }
+
+    const user = await this.userRepository.findOne(id);
+
+    if (!user) {
+      return '사용자를 찾을 수 없습니다.';
+    }
+
+    try {
+      const result = await user.update('email', email);
+
+      await this.emailRepository.deleteEmail(email);
+
+      return result;
+    } catch (error) {
+      console.log('🚀 ~ UserService ~ registerEmail ~ error:', error);
+    }
   }
 }

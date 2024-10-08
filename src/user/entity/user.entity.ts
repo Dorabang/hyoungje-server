@@ -56,7 +56,7 @@ export class User extends Model<User> {
     type: DataType.STRING,
     allowNull: true,
   })
-  phone: string;
+  email: string;
 
   @HasMany(() => Post)
   posts: Post[];

@@ -56,6 +56,7 @@ export class AuthGuard extends NestAuthGuard('jwt') {
         err ||
         new UnauthorizedException({
           result: 'ERROR',
+          message: 'Access token is required or invalid',
         })
       );
     }

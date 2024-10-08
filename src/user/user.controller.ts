@@ -9,6 +9,7 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  ConflictException,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -21,20 +22,42 @@ import { AuthGuard } from 'src/auth/auth.guard';
 import { Request, Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadService } from 'src/upload/upload.service';
+import { UserRepository } from './user.repository';
 
 @Controller('users')
 export class UserController {
   constructor(
+    private readonly userRepository: UserRepository,
     private readonly userService: UserService,
     private readonly uploadService: UploadService,
   ) {}
+
+  @UseGuards(AuthGuard)
+  @Post('email')
+  async email(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body('email') email: string,
+  ) {
+    const user: any = req.user;
+    const result = await this.userService.registerEmail(email, user.sub);
+
+    if (typeof result === 'string') {
+      throw new ConflictException({ result: 'ERROR', message: result });
+    }
+
+    return res
+      .status(200)
+      .json({ result: 'SUCCESS', message: '이메일 인증이 완료되었습니다.' });
+  }
 
   @Post()
   @UseInterceptors(FileInterceptor('profile'))
   async create(
     @Body() createUserDto: CreateUserDto,
     @UploadedFile() file,
-  ): Promise<{ result: 'SUCCESS' | 'ERROR' }> {
+    @Res() res: Response,
+  ) {
     const createUser = { ...createUserDto };
     if (file) {
       const key = await this.uploadService.uploadImage(file);
@@ -43,8 +66,22 @@ export class UserController {
     }
     createUser['isAdmin'] = false;
     try {
-      this.userService.createUser(createUser);
-      return { result: 'SUCCESS' };
+      const token = await this.userService.createUser(createUser);
+
+      res.cookie('access_token', token.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 1 * 60 * 60 * 1000, // 1시간
+      });
+      res.cookie('refresh_token', token.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
+      });
+
+      return res
+        .status(200)
+        .json({ result: 'SUCCESS', message: 'login successful' });
     } catch (error) {
       console.log('🚀 ~ UserController ~ error:', error);
       throw new InternalServerErrorException({ result: 'ERROR' });
@@ -53,7 +90,7 @@ export class UserController {
 
   @Get('all')
   async findAll(): Promise<User[]> {
-    return this.userService.findAll();
+    return this.userRepository.findAll();
   }
 
   @UseGuards(AuthGuard)
@@ -103,7 +140,7 @@ export class UserController {
       updatePassword.password,
     );
     try {
-      this.userService.update(user.id, { password: newPassword });
+      this.userRepository.update(user.id, { password: newPassword });
       res.clearCookie('access_token');
       res.clearCookie('refresh_token');
       return res.status(200).json({ result: 'SUCCESS' });
@@ -131,7 +168,7 @@ export class UserController {
     const payload: any = req.user;
     const user = await this.userService.getByUserId(payload.userId);
     try {
-      await this.userService.update(user.id, updateUser);
+      await this.userRepository.update(user.id, updateUser);
       return res.status(200).json({ result: 'SUCCESS' });
     } catch (error) {
       console.log('🚀 ~ UserController ~ error:', error);
@@ -145,7 +182,7 @@ export class UserController {
     const payload: any = req.user;
     const user = await this.userService.getByUserId(payload.userId);
     try {
-      this.userService.remove(user.id);
+      this.userRepository.remove(user.id);
       res.clearCookie('access_token');
       res.clearCookie('refresh_token');
       return res.status(200).json({ result: 'SUCCESS' });

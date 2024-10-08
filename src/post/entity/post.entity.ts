@@ -31,6 +31,12 @@ export class Post extends Model<Post> {
   user: User;
 
   @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  displayName: string;
+
+  @Column({
     type: DataType.ARRAY(DataType.STRING),
     allowNull: true,
   })
