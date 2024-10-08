@@ -8,6 +8,7 @@ import { Bookmark } from 'src/bookmarks/entity/bookmark.entity';
 import { AuthModule } from 'src/auth/auth.module';
 import { EmailModule } from 'src/email/email.module';
 import { UserRepository } from './user.repository';
+import { TransactionService } from 'src/transaction/transaction.service';
 
 @Global()
 @Module({
@@ -18,7 +19,7 @@ import { UserRepository } from './user.repository';
     UploadModule,
   ],
   controllers: [UserController],
-  providers: [UserService, UserRepository],
+  providers: [UserService, UserRepository, TransactionService],
   exports: [UserService, UserRepository],
 })
 export class UserModule {}

@@ -1,18 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Bookmark } from 'src/bookmarks/entity/bookmark.entity';
-import { User } from 'src/user/entity/user.entity';
+import {
+  Transaction,
+  TransactionService,
+} from 'src/transaction/transaction.service';
 
 @Injectable()
 export class BookmarksService {
   constructor(
     @InjectModel(Bookmark)
     private readonly bookmarkModel: typeof Bookmark,
+    private readonly transactionService: TransactionService,
   ) {}
 
-  async createBookmark(userId: number, postId: number): Promise<void> {
+  @Transaction()
+  async createBookmark(
+    userId: number,
+    postId: number,
+    transaction?: any,
+  ): Promise<void> {
     await this.bookmarkModel.findOrCreate({
       where: { userId, postId },
+      transaction,
     });
   }
 
@@ -40,12 +50,17 @@ export class BookmarksService {
     return userIds;
   }
 
-  async removeBookmark(userId: number, postId: number): Promise<void> {
+  @Transaction()
+  async removeBookmark(
+    userId: number,
+    postId: number,
+    transaction?: any,
+  ): Promise<void> {
     const bookmark = await this.bookmarkModel.findOne({
       where: { userId, postId },
     });
     if (bookmark) {
-      await bookmark.destroy();
+      await bookmark.destroy({ transaction });
     }
   }
 }

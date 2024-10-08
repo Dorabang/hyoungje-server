@@ -9,6 +9,7 @@ import { DocumentCounter } from 'src/documentCounter/entity/documentCounter.enti
 import { Bookmark } from 'src/bookmarks/entity/bookmark.entity';
 import { UploadModule } from 'src/upload/upload.module';
 import { DocumentCounterModule } from 'src/documentCounter/documentCounter.module';
+import { TransactionService } from 'src/transaction/transaction.service';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { DocumentCounterModule } from 'src/documentCounter/documentCounter.modul
     forwardRef(() => DocumentCounterModule),
   ],
   controllers: [PostController],
-  providers: [PostService],
+  providers: [PostService, TransactionService],
   exports: [PostService],
 })
 export class PostModule {}

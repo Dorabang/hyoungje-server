@@ -2,6 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Comment } from 'src/comments/entity/comments.entity';
 import { Post } from 'src/post/entity/post.entity';
+import {
+  Transaction,
+  TransactionService,
+} from 'src/transaction/transaction.service';
 import { User } from 'src/user/entity/user.entity';
 
 @Injectable()
@@ -11,12 +15,15 @@ export class CommentsService {
     private readonly commentModel: typeof Comment,
     @InjectModel(Post)
     private readonly postModel: typeof Post,
+    private readonly transactionService: TransactionService,
   ) {}
 
+  @Transaction()
   async createComment(
     userId: number,
     content: string,
     postId: number,
+    transaction?: any,
   ): Promise<Comment> {
     // 댓글이 속한 게시물이 존재하는지 확인
     const post = await this.postModel.findByPk(postId);
@@ -28,13 +35,18 @@ export class CommentsService {
     }
 
     // 댓글 생성
-    const comment = await this.commentModel.create({
-      userId,
-      content,
-      postId,
-    });
+    const comment = await this.commentModel.create(
+      {
+        userId,
+        content,
+        postId,
+      },
+      {
+        transaction,
+      },
+    );
 
-    await post.increment('commentCount');
+    await post.increment('commentCount', { transaction });
 
     return comment;
   }
@@ -90,15 +102,21 @@ export class CommentsService {
     };
   }
 
-  async update(id: number, content: Partial<Comment>): Promise<void> {
-    await this.commentModel.update(content, { where: { id } });
+  @Transaction()
+  async update(
+    id: number,
+    content: Partial<Comment>,
+    transaction?: any,
+  ): Promise<void> {
+    await this.commentModel.update(content, { where: { id }, transaction });
   }
 
   async findOne(id: number) {
     return await this.commentModel.findByPk(id);
   }
 
-  async remove(id: number): Promise<void> {
+  @Transaction()
+  async remove(id: number, transaction?: any): Promise<void> {
     const comment = await this.commentModel.findByPk(id);
 
     if (!comment) {
@@ -117,7 +135,7 @@ export class CommentsService {
       });
     }
 
-    await comment.destroy();
-    await post.decrement('commentCount');
+    await comment.destroy({ transaction });
+    await post.decrement('commentCount', { transaction });
   }
 }

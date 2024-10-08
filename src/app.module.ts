@@ -21,6 +21,7 @@ import { Channel } from './youtube/entity/channel.entity';
 import { Playlist } from './youtube/entity/playlist.entity';
 import { YoutubeModule } from './youtube/youtube.module';
 import { Email } from './email/entity/email.entity';
+import { TransactionService } from './transaction/transaction.service';
 
 @Module({
   imports: [
@@ -59,6 +60,6 @@ import { Email } from './email/entity/email.entity';
     YoutubeModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, TransactionService],
 })
 export class AppModule {}

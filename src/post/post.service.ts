@@ -1,12 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Sequelize } from 'sequelize-typescript';
 import { Op } from 'sequelize';
 
 import { Post } from './entity/post.entity';
 import { Comment } from 'src/comments/entity/comments.entity';
 import { User } from 'src/user/entity/user.entity';
 import { DocumentCounterService } from 'src/documentCounter/documentCounter.service';
+import {
+  Transaction,
+  TransactionService,
+} from 'src/transaction/transaction.service';
 
 @Injectable()
 export class PostService {
@@ -16,30 +19,26 @@ export class PostService {
     private documentCounterService: DocumentCounterService,
     @InjectModel(Comment)
     private readonly commentModel: typeof Comment,
-    private readonly sequelize: Sequelize,
+    private transactionService: TransactionService,
   ) {}
 
-  async create(post: Partial<Post>) {
-    const result = await this.sequelize.transaction(async (transaction) => {
-      const documentNumber =
-        await this.documentCounterService.getNextDocumentNumber(
-          post.marketType,
-          transaction,
-        );
-
-      // 새로운 게시물 생성
-      const newPost = await this.postModel.create(
-        {
-          ...post,
-          documentNumber,
-        },
-        { transaction },
+  @Transaction()
+  async create(post: Partial<Post>, transaction?: any) {
+    const documentNumber =
+      await this.documentCounterService.getNextDocumentNumber(
+        post.marketType,
+        transaction,
       );
 
-      return newPost;
-    });
+    const newPost = await this.postModel.create(
+      {
+        ...post,
+        documentNumber,
+      },
+      { transaction },
+    );
 
-    return result;
+    return newPost;
   }
 
   async findAll(
@@ -172,13 +171,20 @@ export class PostService {
     };
   }
 
-  async update(id: number, post: Partial<Post>): Promise<void> {
+  @Transaction()
+  async update(
+    id: number,
+    post: Partial<Post>,
+    transaction?: any,
+  ): Promise<void> {
     await this.postModel.update(post, {
       where: { postId: id },
+      transaction,
     });
   }
 
-  async remove(id: number): Promise<void> {
+  @Transaction()
+  async remove(id: number, transaction?: any): Promise<void> {
     const post = await this.postModel.findByPk(id);
     if (!post) {
       throw new NotFoundException({
@@ -188,8 +194,8 @@ export class PostService {
     }
     const comments = await this.commentModel.findAll({ where: { postId: id } });
 
-    await post.destroy();
-    comments.forEach(async (comment) => await comment.destroy());
+    await post.destroy({ transaction });
+    comments.forEach(async (comment) => await comment.destroy({ transaction }));
   }
 
   async getSitemapPosts() {
