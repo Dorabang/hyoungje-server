@@ -1,12 +1,15 @@
 // services/youtube.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Sequelize } from 'sequelize-typescript';
 import { Op } from 'sequelize';
 import { google, youtube_v3 } from 'googleapis';
 
 import { Channel } from './entity/channel.entity';
 import { Playlist } from './entity/playlist.entity';
+import {
+  Transaction,
+  TransactionService,
+} from 'src/transaction/transaction.service';
 
 @Injectable()
 export class YoutubeService {
@@ -14,10 +17,10 @@ export class YoutubeService {
 
   constructor(
     @InjectModel(Channel)
-    private channelModel: typeof Channel,
+    private readonly channelModel: typeof Channel,
     @InjectModel(Playlist)
-    private playlistItemModel: typeof Playlist,
-    private sequelize: Sequelize, // Sequelize 인스턴스 주입
+    private readonly playlistItemModel: typeof Playlist,
+    private readonly transactionService: TransactionService,
   ) {
     this.youtube = google.youtube({
       version: 'v3',
@@ -25,12 +28,18 @@ export class YoutubeService {
     });
   }
 
-  async createChannel(channel: Partial<Channel>) {
-    return this.channelModel.create(channel);
+  @Transaction()
+  async createChannel(channel: Partial<Channel>, transaction?: any) {
+    return this.channelModel.create(channel, { transaction });
   }
 
-  async updateChannel(id: number, channel: Partial<Channel>) {
-    await this.channelModel.update(channel, { where: { id } });
+  @Transaction()
+  async updateChannel(
+    id: number,
+    channel: Partial<Channel>,
+    transaction?: any,
+  ) {
+    await this.channelModel.update(channel, { where: { id }, transaction });
   }
 
   async refreshData() {
@@ -64,8 +73,12 @@ export class YoutubeService {
     })) as Partial<Playlist>[];
   }
 
-  private async updatePlaylistItems(id: number, items: Partial<Playlist>[]) {
-    const transaction = await this.sequelize.transaction();
+  @Transaction()
+  private async updatePlaylistItems(
+    id: number,
+    items: Partial<Playlist>[],
+    transaction?: any,
+  ) {
     const prevPlaylist = await this.getPlaylist(id);
     try {
       if (prevPlaylist) {

@@ -8,6 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/sequelize';
 import * as bcrypt from 'bcrypt';
+import { Sequelize } from 'sequelize-typescript';
 
 import { EmailService } from 'src/email/email.service';
 import { LoginUserDto } from 'src/user/dto/login-user.dto';
@@ -24,6 +25,7 @@ export class AuthService {
     @InjectModel(User)
     private readonly userModel: typeof User,
     private readonly jwtService: JwtService,
+    private readonly sequelize: Sequelize,
   ) {}
 
   async validateUser(loginUserDto: LoginUserDto): Promise<any> {
@@ -101,35 +103,38 @@ export class AuthService {
     await this.emailService.sendAuthCode(mailOptions, code);
   }
 
-  async resetPassword(
-    email: string,
-    code: string,
-    newPassword: string,
-  ): Promise<{ access_token: string; refresh_token: string }> {
-    const result = await this.emailService.verifyAuthCode(email, code);
+  async resetPassword(email: string, code: string, newPassword: string) {
+    const transaction = await this.sequelize.transaction();
+    try {
+      const result = await this.emailService.verifyAuthCode(email, code);
 
-    if (!result) {
-      throw new ConflictException({
-        result: 'ERROR',
-        message: '인증 코드가 바르지 않습니다.',
-      });
+      if (!result) {
+        throw new ConflictException({
+          result: 'ERROR',
+          message: '인증 코드가 바르지 않습니다.',
+        });
+      }
+
+      const user = await this.userModel.findOne({ where: { email } });
+
+      if (!user) {
+        throw new ConflictException({
+          result: 'ERROR',
+          message: 'User not found',
+        });
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      user.password = hashedPassword;
+
+      await user.save({ transaction });
+
+      // 비밀번호 초기화 후 새로운 JWT 토큰 발급
+      transaction.commit();
+      return this.login(user);
+    } catch (error) {
+      console.log('🚀 ~ AuthService ~ error:', error);
+      transaction.rollback();
     }
-
-    const user = await this.userModel.findOne({ where: { email } });
-
-    if (!user) {
-      throw new ConflictException({
-        result: 'ERROR',
-        message: 'User not found',
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-
-    await user.save();
-
-    // 비밀번호 초기화 후 새로운 JWT 토큰 발급
-    return this.login(user);
   }
 }

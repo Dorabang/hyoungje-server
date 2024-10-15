@@ -1,17 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { DocumentCounter } from './entity/documentCounter.entity';
+import {
+  Transaction,
+  TransactionService,
+} from 'src/transaction/transaction.service';
 
 @Injectable()
 export class DocumentCounterService {
   constructor(
     @InjectModel(DocumentCounter)
     private documentCounterModel: typeof DocumentCounter,
+    private transactionService: TransactionService,
   ) {}
 
+  @Transaction()
   async getNextDocumentNumber(
     marketType: string,
-    transaction: any,
+    transaction?: any,
   ): Promise<number> {
     let documentCounter = await this.documentCounterModel.findOne({
       where: { marketType },

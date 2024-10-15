@@ -2,16 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 
 import { User } from './entity/user.entity';
+import {
+  Transaction,
+  TransactionService,
+} from 'src/transaction/transaction.service';
 
 @Injectable()
 export class UserRepository {
   constructor(
     @InjectModel(User)
     private userModel: typeof User,
+    private readonly transactionService: TransactionService,
   ) {}
 
-  async create(user: Partial<User>): Promise<User> {
-    return this.userModel.create(user);
+  @Transaction()
+  async create(user: Partial<User>, transaction?: any): Promise<User> {
+    return this.userModel.create(user, { transaction });
   }
 
   async findAll(): Promise<User[]> {
@@ -22,11 +28,17 @@ export class UserRepository {
     return this.userModel.findByPk(id);
   }
 
-  async update(id: number, user: Partial<User>): Promise<void> {
-    await this.userModel.update(user, { where: { id } });
+  @Transaction()
+  async update(
+    id: number,
+    user: Partial<User>,
+    transaction?: any,
+  ): Promise<void> {
+    await this.userModel.update(user, { where: { id }, transaction });
   }
 
-  async remove(id: number): Promise<void> {
-    await this.userModel.destroy({ where: { id } });
+  @Transaction()
+  async remove(id: number, transaction?: any): Promise<void> {
+    await this.userModel.destroy({ where: { id }, transaction });
   }
 }

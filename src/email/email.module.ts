@@ -7,6 +7,7 @@ import { EmailRepository } from './email.repository';
 import { Email } from './entity/email.entity';
 import { UserModule } from 'src/user/user.module';
 import { User } from 'src/user/entity/user.entity';
+import { TransactionService } from 'src/transaction/transaction.service';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { User } from 'src/user/entity/user.entity';
     forwardRef(() => UserModule),
   ],
   controllers: [EmailController],
-  providers: [EmailService, EmailRepository],
+  providers: [EmailService, EmailRepository, TransactionService],
   exports: [EmailService, EmailRepository],
 })
 export class EmailModule {}

@@ -12,25 +12,22 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { AuthService } from 'src/auth/auth.service';
 import { EmailRepository } from 'src/email/email.repository';
 import { UserRepository } from './user.repository';
+import { InjectModel } from '@nestjs/sequelize';
 
 @Injectable()
 export class UserService {
   constructor(
     @Inject(forwardRef(() => AuthService))
     private authService: AuthService,
+    @InjectModel(User)
+    private readonly userModel: typeof User,
     private readonly userRepository: UserRepository,
     private readonly emailRepository: EmailRepository,
   ) {}
 
   async createUser(userDto: CreateUserDto) {
-    userDto.password = await this.hashPassword(userDto.password);
-    const duplicatedUser = User.findOne({
-      where: {
-        userId: userDto.userId,
-      },
-    });
-
-    if (duplicatedUser === null) {
+    const duplicatedUser = await this.getByUserId(userDto.userId);
+    if (duplicatedUser) {
       throw new ConflictException({
         result: 'ERROR',
         message: '이미 등록되어 있는 사용자입니다.',
@@ -44,13 +41,14 @@ export class UserService {
         message: '이미 등록되어 있는 닉네임입니다.',
       });
     }
-    const user = await User.create(userDto);
 
+    userDto.password = await this.hashPassword(userDto.password);
+    const user = await this.userRepository.create(userDto);
     return await this.authService.login(user);
   }
 
   async getByUserId(userId: string) {
-    const user = await User.findOne({
+    const user = await this.userModel.findOne({
       where: {
         userId: userId,
       },
@@ -114,7 +112,7 @@ export class UserService {
     }
 
     try {
-      const result = await user.update('email', email);
+      const result = await this.userRepository.update(user.id, { email });
 
       await this.emailRepository.deleteEmail(email);
 
