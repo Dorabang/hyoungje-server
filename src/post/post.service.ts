@@ -200,7 +200,7 @@ export class PostService {
 
   async getSitemapPosts() {
     return await this.postModel.findAll({
-      attributes: ['id', 'updatedAt', 'marketType'],
+      attributes: ['postId', 'updatedAt', 'marketType'],
     });
   }
 }

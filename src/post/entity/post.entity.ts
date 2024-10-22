@@ -13,7 +13,7 @@ import { User } from 'src/user/entity/user.entity';
 import { Bookmark } from 'src/bookmarks/entity/bookmark.entity';
 
 @Table({
-  tableName: 'posts',
+  tableName: 'Posts',
 })
 export class Post extends Model<Post> {
   @Column({

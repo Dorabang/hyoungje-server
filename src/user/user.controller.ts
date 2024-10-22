@@ -191,4 +191,42 @@ export class UserController {
       throw new InternalServerErrorException({ result: 'ERROR' });
     }
   }
+
+  @Post('/findUserId')
+  async getUserId(@Body() userData: { email: string; name: string }) {
+    const user = await this.userRepository.findByCriteria({
+      email: userData.email,
+    });
+
+    if (!user) {
+      return { result: 'ERROR', message: '사용자를 찾을 수 없습니다.' };
+    }
+    const maskedUserId = this.userService.maskUserId(user.userId); // 아이디 마스킹 처리
+
+    return {
+      result: 'SUCCESS',
+      data: { name: user.name, userId: maskedUserId },
+    };
+  }
+
+  @Post('/reset-password-email')
+  async requestResetPasswordEmail(
+    @Body() userData: { userId: string; email: string },
+  ) {
+    const user = await this.userService.findUserByEmail(userData.email);
+
+    await this.userService.sendResetPasswordEmail(user.email, user.userId);
+    return { result: 'SUCCESS' };
+  }
+
+  @Put('/reset-password')
+  async confirmResetPassword(
+    @Body() data: { code: string; userId: string; password: string },
+  ) {
+    return this.userService.resetPassword(
+      data.code,
+      data.userId,
+      data.password,
+    );
+  }
 }
