@@ -163,7 +163,6 @@ export class PostController {
           }),
         );
 
-        // prevImage가 존재하지 않을 경우 빈 배열 할당
         const prevImage = updatePostDto.prevImage
           ? updatePostDto.prevImage.split(',')
           : [];
