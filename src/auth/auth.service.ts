@@ -29,23 +29,25 @@ export class AuthService {
   ) {}
 
   async validateUser(loginUserDto: LoginUserDto): Promise<any> {
-    const user = await this.userService.getByUserId(loginUserDto.userId);
-    const passwordValid = await this.userService.comparePassword(
-      user.password,
-      loginUserDto.password,
-    );
-    if (!passwordValid) {
+    try {
+      const user = await this.userService.getByUserId(loginUserDto.userId);
+      const passwordValid = await this.userService.comparePassword(
+        user.password,
+        loginUserDto.password,
+      );
+
+      if (user && passwordValid) {
+        const { password, ...result } = user;
+        return result;
+      }
+      return null;
+    } catch (error) {
+      console.log('🚀 ~ AuthService ~ validateUser ~ error:', error);
       throw new UnauthorizedException({
         result: 'ERROR',
         message: '아이디 혹은 비밀번호를 잘못 입력하셨습니다.',
       });
     }
-
-    if (user && passwordValid) {
-      const { password, ...result } = user;
-      return result;
-    }
-    return null;
   }
 
   async refresh(refreshToken: string) {
