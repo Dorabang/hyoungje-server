@@ -42,7 +42,7 @@ export class AuthService {
     }
 
     if (user && passwordValid) {
-      const { password, isAdmin, ...result } = user;
+      const { password, ...result } = user;
       return result;
     }
     return null;
