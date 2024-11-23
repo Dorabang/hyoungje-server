@@ -151,6 +151,7 @@ export class PostService {
         postId: {
           [Op.lt]: postId, // 현재 게시물보다 ID가 작은 게시물
         },
+        marketType: currentPost.marketType,
       },
       order: [['postId', 'DESC']], // ID가 큰 것부터 작은 것 순서로 정렬
     });
@@ -161,6 +162,7 @@ export class PostService {
         postId: {
           [Op.gt]: postId, // 현재 게시물보다 ID가 큰 게시물
         },
+        marketType: currentPost.marketType,
       },
       order: [['postId', 'ASC']], // ID가 작은 것부터 큰 것 순서로 정렬
     });
