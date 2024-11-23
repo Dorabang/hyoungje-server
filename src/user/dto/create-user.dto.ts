@@ -1,9 +1,9 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean } from 'class-validator';
 
 export class CreateUserDto {
-  @IsString(null)
+  @IsBoolean()
   @IsOptional()
-  bookmark?: string[] | null;
+  isAdmin: boolean = false;
 
   @IsString()
   @IsNotEmpty()
@@ -15,9 +15,21 @@ export class CreateUserDto {
 
   @IsString()
   @IsNotEmpty()
-  displayName: string;
+  name: string;
 
   @IsString()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  displayName: string;
+
+  @IsString(null)
+  @IsOptional()
+  bookmark?: string[] | null;
+
+  @IsString(null)
   @IsOptional()
   profile?: string;
 

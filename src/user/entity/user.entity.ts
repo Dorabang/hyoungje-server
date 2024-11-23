@@ -1,6 +1,15 @@
-import { Column, DataType, Model, Table } from 'sequelize-typescript';
+import {
+  BelongsToMany,
+  Column,
+  DataType,
+  HasMany,
+  Model,
+  Table,
+} from 'sequelize-typescript';
+import { Post } from 'src/post/entity/post.entity';
+import { Bookmark } from 'src/bookmarks/entity/bookmark.entity';
 
-@Table
+@Table({ tableName: 'Users' })
 export class User extends Model<User> {
   @Column({
     type: DataType.INTEGER,
@@ -10,9 +19,10 @@ export class User extends Model<User> {
   id: number;
 
   @Column({
-    type: DataType.STRING,
+    type: DataType.BOOLEAN,
+    allowNull: true,
   })
-  bookmark: string[];
+  isAdmin: boolean;
 
   @Column({
     type: DataType.STRING,
@@ -31,7 +41,16 @@ export class User extends Model<User> {
     type: DataType.STRING,
     allowNull: false,
   })
+  name: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
   displayName: string;
+
+  @BelongsToMany(() => Post, () => Bookmark) // 북마크한 게시물들
+  bookmarkedPosts: Post[];
 
   @Column({
     type: DataType.STRING,
@@ -41,7 +60,10 @@ export class User extends Model<User> {
 
   @Column({
     type: DataType.STRING,
-    allowNull: false,
+    allowNull: true,
   })
-  phone: string;
+  email: string;
+
+  @HasMany(() => Post)
+  posts: Post[];
 }
