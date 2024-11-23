@@ -10,7 +10,7 @@ import { Post } from '../../post/entity/post.entity';
 import { User } from 'src/user/entity/user.entity';
 
 @Table({
-  tableName: 'comments',
+  tableName: 'Comments',
 })
 export class Comment extends Model {
   @Column({

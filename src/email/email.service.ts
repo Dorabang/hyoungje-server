@@ -4,6 +4,7 @@ import * as nodemailer from 'nodemailer';
 
 import { EmailRepository } from './email.repository';
 import { User } from 'src/user/entity/user.entity';
+import { generatePasswordResetEmail } from 'src/utils/mail';
 
 @Injectable()
 export class EmailService {
@@ -83,10 +84,10 @@ export class EmailService {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  async sendResetPasswordEmail(email: string): Promise<void> {
-    const user = await this.userModel.findOne({ where: { email } });
+  async sendResetPasswordEmail(email: string, userId: string): Promise<void> {
+    const user = await this.userModel.findOne({ where: { userId } });
     const code = this.generateAuthCode();
-    await this.emailRepository.createEmail(email, code);
+    await this.emailRepository.createEmail(user.email, code);
 
     if (!user) {
       throw new Error('User not found');
@@ -99,9 +100,7 @@ export class EmailService {
     const mailOptions = {
       to: user.email,
       subject: '[옥동] 비밀번호 재설정 메일',
-      html: `안녕하세요 회원님. 옥동 비밀번호 재설정을 원하신다면 아래 링크를 통해 비밀번호 재설정을 진행해주세요.
-      <a href={'${process.env.DEV_FRONT_URL}/init-password?token=${code}'}>이동하기</a>
-      본인이 아니라면 홈페이지 로그인 후, 비밀번호를 변경해주세요.`,
+      html: generatePasswordResetEmail(code, userId),
     };
 
     await this.sendMail(mailOptions);

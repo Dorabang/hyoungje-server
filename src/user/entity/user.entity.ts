@@ -9,7 +9,7 @@ import {
 import { Post } from 'src/post/entity/post.entity';
 import { Bookmark } from 'src/bookmarks/entity/bookmark.entity';
 
-@Table
+@Table({ tableName: 'Users' })
 export class User extends Model<User> {
   @Column({
     type: DataType.INTEGER,
@@ -36,6 +36,12 @@ export class User extends Model<User> {
     allowNull: false,
   })
   password: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
+  name: string;
 
   @Column({
     type: DataType.STRING,

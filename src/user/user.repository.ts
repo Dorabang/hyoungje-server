@@ -28,6 +28,14 @@ export class UserRepository {
     return this.userModel.findByPk(id);
   }
 
+  async findByCriteria(userData: Partial<User>): Promise<User> {
+    return this.userModel.findOne({
+      where: {
+        ...userData,
+      },
+    });
+  }
+
   @Transaction()
   async update(
     id: number,

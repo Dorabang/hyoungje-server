@@ -149,7 +149,9 @@ export class PostController {
       }
 
       const updatePost = { ...updatePostDto };
-      delete updatePost.prevImage;
+      if (updatePost.prevImage) {
+        delete updatePost.prevImage;
+      }
 
       if (files) {
         const imageUrl: string[] = [];
@@ -161,13 +163,14 @@ export class PostController {
           }),
         );
 
-        const prevImage = updatePostDto?.prevImage
+        const prevImage = updatePostDto.prevImage
           ? updatePostDto.prevImage.split(',')
-          : null;
+          : [];
+
         updatePost['image'] = [...prevImage, ...imageUrl];
       }
 
-      this.postService.update(id, updatePost);
+      await this.postService.update(id, updatePost); // 수정: await 추가
       return res.status(200).json({ result: 'SUCCESS' });
     } catch (error) {
       console.log('🚀 ~ PostController ~ error:', error);

@@ -1,7 +1,9 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
   forwardRef,
 } from '@nestjs/common';
@@ -13,6 +15,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { EmailRepository } from 'src/email/email.repository';
 import { UserRepository } from './user.repository';
 import { InjectModel } from '@nestjs/sequelize';
+import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class UserService {
@@ -23,10 +26,15 @@ export class UserService {
     private readonly userModel: typeof User,
     private readonly userRepository: UserRepository,
     private readonly emailRepository: EmailRepository,
+    private readonly emailService: EmailService,
   ) {}
 
   async createUser(userDto: CreateUserDto) {
-    const duplicatedUser = await this.getByUserId(userDto.userId);
+    const duplicatedUser = await this.userModel.findOne({
+      where: {
+        userId: userDto.userId,
+      },
+    });
     if (duplicatedUser) {
       throw new ConflictException({
         result: 'ERROR',
@@ -120,5 +128,46 @@ export class UserService {
     } catch (error) {
       console.log('🚀 ~ UserService ~ registerEmail ~ error:', error);
     }
+  }
+
+  maskUserId(userId: string): string {
+    if (userId.length <= 3) {
+      return userId; // 6자 이하인 경우 그대로 반환
+    }
+
+    const visibleStart = userId.slice(0, 2); // 앞 2글자
+    const visibleEnd = userId.slice(-1); // 마지막 1글자
+    const masked = '*'.repeat(userId.length - 3); // 중간 글자를 *로 대체
+
+    return `${visibleStart}${masked}${visibleEnd}`;
+  }
+
+  async findUserByEmail(email: string): Promise<User> {
+    const user = await this.userRepository.findByCriteria({ email });
+    if (!user) {
+      throw new NotFoundException({
+        result: 'ERROR',
+        message: '사용자를 찾을 수 없습니다.',
+      });
+    }
+    return user;
+  }
+
+  async sendResetPasswordEmail(email: string, userId: string) {
+    await this.emailService.sendResetPasswordEmail(email, userId);
+  }
+
+  async resetPassword(code: string, userId: string, newPassword: string) {
+    const user = await this.getByUserId(userId);
+    const emailRecord = await this.emailRepository.findEmail(user.email);
+    if (!emailRecord || emailRecord.authCode !== code) {
+      throw new BadRequestException('인증 번호가 유효하지 않습니다.');
+    }
+
+    const hashedPassword = await this.hashPassword(newPassword);
+    await this.userRepository.update(user.id, hashedPassword);
+    await this.emailRepository.deleteEmail(user.email);
+
+    return { result: 'SUCCESS' };
   }
 }
