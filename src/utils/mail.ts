@@ -1,7 +1,12 @@
+const FRONT_URL =
+  process.env.ENV_NODE === 'development'
+    ? process.env.DEV_FRONT_URL
+    : process.env.PRODUCT_FRONT_URL;
+
 export const generatePasswordResetEmail = (code: string, userId: string) => {
   return `<div style="background: #fafafa; padding: 40px">
   <div style="width: 120px; padding-bottom: 24px; margin: 0 auto">
-    <a href="${process.env.PRODUCT_FRONT_URL}">
+    <a href="${FRONT_URL}">
       <img
         style="width: 100%; object-fit: contain"
         src="https://okdong-bucket.s3.ap-northeast-2.amazonaws.com/logo.png"
@@ -26,7 +31,7 @@ export const generatePasswordResetEmail = (code: string, userId: string) => {
     <p>이 링크는 5분 동안 유효합니다.</p>
     <p style="text-align: center; padding: 12px 24px">
       <a
-        href="${process.env.PRODUCT_FRONT_URL}/password/init-password?code=${code}&userId=${userId}"
+        href="${FRONT_URL}/password/init-password?code=${code}&userId=${userId}"
         style="
           display: inline-block;
           background: rgba(191, 30, 46, 0.2);
@@ -43,7 +48,7 @@ export const generatePasswordResetEmail = (code: string, userId: string) => {
     <div>
       <p style="font-size: 12px; padding-top: 24px">
         본인이 아니라면
-        <a href="${process.env.PRODUCT_FRONT_URL}/login" target="_blank">홈페이지</a> 로그인
+        <a href="${FRONT_URL}/login" target="_blank">홈페이지</a> 로그인
         후, 비밀번호를 변경해주세요.
       </p>
     </div>
@@ -53,7 +58,7 @@ export const generatePasswordResetEmail = (code: string, userId: string) => {
     <p style="color: #999; font-size: 14px">
       옥동에서 보냄 ·
       <a
-        href="${process.env.PRODUCT_FRONT_URL}"
+        href="${FRONT_URL}"
         style="text-decoration: none; color: #bf1e2e"
         target="_blank"
         >옥동</a
@@ -70,7 +75,7 @@ export const generatePasswordResetEmail = (code: string, userId: string) => {
 export const generateEmailVerificationEmail = (code: string) => {
   return `<div style="background: #fafafa; padding: 40px">
       <div style="width: 120px; padding-bottom: 24px; margin: 0 auto">
-        <a href="http://localhost:3000">
+        <a href="${FRONT_URL}">
           <img
             style="width: 100%; object-fit: contain"
             src="https://okdong-bucket.s3.ap-northeast-2.amazonaws.com/logo.png"
@@ -111,7 +116,7 @@ export const generateEmailVerificationEmail = (code: string) => {
         <div>
           <p style="font-size: 12px; padding-top: 24px">
             본인이 아니라면
-            <a href="http://localhost:3000/login" target="_blank">홈페이지</a> 로그인
+            <a href="${FRONT_URL}/login" target="_blank">홈페이지</a> 로그인
             후, 비밀번호를 변경해주세요.
           </p>
         </div>
@@ -121,7 +126,7 @@ export const generateEmailVerificationEmail = (code: string) => {
         <p style="color: #999; font-size: 14px">
           옥동에서 보냄 ·
           <a
-            href="http://localhost:3000"
+            href="${FRONT_URL}"
             style="text-decoration: none; color: #bf1e2e"
             target="_blank"
             >옥동</a
