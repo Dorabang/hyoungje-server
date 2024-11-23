@@ -70,12 +70,12 @@ export class UserController {
 
       res.cookie('access_token', token.access_token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'development',
         maxAge: 1 * 60 * 60 * 1000, // 1시간
       });
       res.cookie('refresh_token', token.refresh_token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'development',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
       });
 

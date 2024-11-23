@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   forwardRef,
   Inject,
   InternalServerErrorException,
@@ -43,12 +44,12 @@ export class AuthController {
     const token = this.authService.login(user);
     res.cookie('access_token', (await token).access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === 'development',
       maxAge: 1 * 60 * 60 * 1000, // 1시간
     });
     res.cookie('refresh_token', (await token).refresh_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === 'development',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
     });
 
@@ -73,9 +74,9 @@ export class AuthController {
     const refreshToken = req.cookies?.refresh_token;
 
     if (!refreshToken) {
+      res.clearCookie('access_token');
       res.clearCookie('refresh_token');
-      res.redirect('http://localhost:3000/login');
-      throw new UnauthorizedException({
+      throw new ForbiddenException({
         result: 'ERROR',
         code: 'T003',
         message: 'Refresh token not found',
@@ -87,7 +88,7 @@ export class AuthController {
 
       res.cookie('access_token', accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'development',
         maxAge: 1 * 60 * 60 * 1000, // 1시간
       });
 
@@ -97,10 +98,8 @@ export class AuthController {
       });
     } catch (err) {
       console.log('🚀 ~ AuthController ~ refresh ~ err:', err);
-      if (err.status === 401) {
-        res.clearCookie('refresh_token');
-      }
-      return res.status(err.status).json(err.response);
+      res.clearCookie('access_token');
+      res.clearCookie('refresh_token');
     }
   }
 
